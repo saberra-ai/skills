@@ -3,6 +3,18 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.5.2] — 2026-06-27
+
+### Changed
+- **`build-knowledge-base`** — hardened from dogfooding it on a real 183-crate monorepo
+  (fastrepl/char). Four learnings folded in: (1) **distill the surveys, don't paste** — fan-out
+  agents return exhaustive dumps; a spine doc is ~40–80 lines of flow + cited entry points, not
+  a 200-line dump; (2) a **concrete freshness recipe** for repos with no tooling (`git rev-parse
+  --short HEAD` / `git hash-object` + `verified_at`); (3) **drop in a generic ~50-line llms.txt
+  generator with `--check`**, don't hand-maintain the map; (4) **right-size enforcement to your
+  access** — when you can't wire CI (foreign/early repo), the MVP is a committed `--check` runner
+  + a CONTRIBUTING note, an honest ⬜, not "no enforcement".
+
 ## [0.5.1] — 2026-06-27
 
 ### Changed

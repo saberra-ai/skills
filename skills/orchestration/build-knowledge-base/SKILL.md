@@ -55,6 +55,14 @@ didn't read in the code** — every claim cites its source.
 - Write the spine first: an architecture overview, the top subsystems, and the entry points —
   each **authored by reading the actual code**, citing `file:line`, with the freshness stamp set
   to the current source sha. Match the codebase's voice; be concise (a right-sized doc, not padding).
+- **Distill the surveys; don't paste them.** Fan-out survey agents return *exhaustive* reports
+  (every file, every type) — that's raw material, not the doc. A spine doc is a distillation:
+  the flow + the handful of real entry points (cited) + one small table, ~40–80 lines. Pasting a
+  200-line agent dump is the failure mode here — resist it.
+- **Freshness, concretely.** New repos have no freshness tooling, so stamp it by hand: set
+  `source_sha` to the repo's short HEAD (`git rev-parse --short HEAD`) or `git hash-object` of the
+  doc's `source:` path, plus a `verified_at` date. That's enough for `maintain-knowledge-base` to
+  detect drift later.
 - Defer the long tail explicitly as ⬜ planned coverage — a real "not yet" beats a hallucinated
   page.
 - **Gate:** the spine is documented from source (every doc cites code + carries a freshness
@@ -64,6 +72,11 @@ didn't read in the code** — every claim cites its source.
 - Generate a `llms.txt`-style entry map **from the docs' frontmatter** (H1 + summary +
   per-section link lists with one-line descriptions; deep/optional reference last). Complete by
   construction — every doc listed.
+- **Drop in a generator; don't hand-maintain the map.** Write a tiny ~50-line script that walks
+  the KB, reads `title`/`description` from frontmatter, groups by section dir, and supports
+  `--check` (fail if stale / a link is missing / a doc is unlisted). Hand-writing the map is a
+  Phase-1-only stopgap; a 4-doc KB grows. Keep the generator generic (no hardcoded section list)
+  so it survives new sections.
 - **Gate:** the map regenerates deterministically, lists every doc, and every link resolves.
 
 ## Phase 4 — Coverage contract + enforce  ▶ `verify-capability`
@@ -71,8 +84,13 @@ didn't read in the code** — every claim cites its source.
   exemptions — and wire it, plus a frontmatter lint and the map check, into the **gate and CI**
   as a runner that **fails loud** on an undocumented unit, a stale doc, or an incomplete map.
   This is what makes the KB survive contact with a moving codebase.
-- **Gate:** a deliberately-undocumented unit or a stale edit makes the gate go red — proven, then
-  green once fixed.
+- **Right-size enforcement to your access.** Full CI wiring needs repo ownership + an existing
+  gate. When you can't have that yet (a foreign/early repo), the *minimum viable* enforcement is
+  the committed `--check` runner + a one-line note in CONTRIBUTING/README telling contributors to
+  run it — an honest ⬜ "CI wiring pending" beats pretending a gate exists. Don't let "can't wire
+  CI" become "no enforcement at all".
+- **Gate:** a deliberately-undocumented unit or a stale edit makes the runner go red — proven,
+  then green once fixed (wired into CI where the repo allows; otherwise committed + documented).
 
 ## Phase 5 — Integrate + hand off
 - Commit through the gate; **rebase, never force-push**; targeted `git add`. Point the repo's
