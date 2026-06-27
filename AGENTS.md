@@ -48,6 +48,17 @@ For breadth, **fan out disjoint subagent tracks**, then integrate one at a time 
 gate. When tracks are coupled, define a shared **contract** up front so they build to the
 same shape. Verify the seam, not just the parts.
 
+## 9. Ship a maintenance lifecycle, not just an install
+Shipping a thing users *install* means owning its upgrade path, not just its first run. Carry a
+`VERSION` + `CHANGELOG` so "what changed" is answerable. Make upgrades **reversible** (back up →
+act → restore on failure) and **detect the actual install state** before touching it — never
+assume topology. Evolve user-carried state with **idempotent, done-marked migrations that
+retry on incomplete**: a migration writes its done-marker only when every repair succeeded or
+was provably unnecessary — otherwise it stays unmarked and retries next upgrade (that's *green ≠
+verified* in the upgrade domain). **Re-verify after upgrading** — a green update that can't pass
+its own runner isn't a successful update. And maintenance **never auto-commits**; the user
+controls when changes ship.
+
 ---
 
 **The substrate that makes this enforceable:** rules + skills encode intent; a verification

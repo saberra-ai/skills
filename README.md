@@ -29,6 +29,7 @@ dir, or point your `AGENTS.md` at this repo's [`AGENTS.md`](AGENTS.md).)
 | **engineering/adversarial-harden** | Break fast-built code on purpose — find REAL bugs with a repro, fix forward with a regression test, pin invariants. |
 | **decisions/research-decision** | Resolve an unsure product/eng call: web-search the best practice, cite it, **recommend** (not survey). |
 | **orchestration/ship-feature** | The **front-door workflow** — kick off one feature and it drives build → verify → harden as gated phases that hand off to the skills above. Runnable two ways: drive the phases manually in any harness, or run [`workflows/ship-feature.mjs`](workflows/ship-feature.mjs) as a one-command [dynamic workflow](https://code.claude.com/docs/en/workflows) in Claude Code. |
+| **orchestration/maintain-skills** | The **maintenance front-door** — keep an *installed* copy current the safe way: detect → update (backup + restore-on-failure) → run idempotent [migrations](migrations/) → **re-verify with the validator** → report what changed. Never auto-commits. Runnable manually or via [`workflows/maintain.mjs`](workflows/maintain.mjs). |
 
 ### Subagents (`agents/`)
 

@@ -159,6 +159,51 @@ function checkFrontDoor(file) {
   return grade(file, 'frontdoor', errors, warnings, {});
 }
 
+const isSemver = s => /^\d+\.\d+\.\d+$/.test(String(s).trim());
+
+// Lifecycle backbone: VERSION must be SemVer and match package.json (a parity pin so the two
+// can't drift), and CHANGELOG must carry an entry for the current version. A kit you ship for
+// install needs an answerable "what changed" — this enforces it.
+function checkLifecycle() {
+  const out = [];
+  const verPath = join(ROOT, 'VERSION');
+  const version = existsSync(verPath) ? readFileSync(verPath, 'utf8').trim() : null;
+  const v = grade(verPath, 'version', [], [], { version });
+  if (!version) v.errors.push('no VERSION file');
+  else if (!isSemver(version)) v.errors.push(`VERSION "${version}" is not SemVer (x.y.z)`);
+  else {
+    const pkgPath = join(ROOT, 'package.json');
+    if (existsSync(pkgPath)) {
+      let pkgVer = null;
+      try { pkgVer = JSON.parse(readFileSync(pkgPath, 'utf8')).version; } catch { v.errors.push('package.json is not valid JSON'); }
+      if (pkgVer && pkgVer !== version) v.errors.push(`VERSION "${version}" != package.json "${pkgVer}" (parity pin)`);
+    }
+  }
+  v.ok = v.errors.length === 0;
+  out.push(v);
+
+  const clPath = join(ROOT, 'CHANGELOG.md');
+  const cl = grade(clPath, 'changelog', [], [], {});
+  if (!existsSync(clPath)) cl.errors.push('no CHANGELOG.md');
+  else if (version && isSemver(version) && !new RegExp(`##\\s*\\[?${version.replace(/\./g, '\\.')}\\]?`).test(readFileSync(clPath, 'utf8')))
+    cl.errors.push(`CHANGELOG has no entry for current version ${version}`);
+  cl.ok = cl.errors.length === 0;
+  out.push(cl);
+  return out;
+}
+
+// Migration scripts must parse with the real `bash` (same idea as the workflow node --check).
+function checkMigration(file) {
+  const errors = [];
+  try {
+    execFileSync('bash', ['-n', file], { stdio: 'pipe', timeout: 10_000 });
+  } catch (e) {
+    const msg = (e.stderr?.toString() || e.message).split('\n').find(l => l.trim()) || 'parse failed';
+    errors.push(`does not parse (bash -n): ${msg.trim()}`);
+  }
+  return grade(file, 'migration', errors, [], {});
+}
+
 // internal markdown links must resolve (skip http/anchors); [[wikilinks]] must
 // name a real skill/agent if any exist.
 function checkLinks(file, skillNames, agentNames) {
@@ -200,6 +245,10 @@ function run() {
   const workflows = walk(join(ROOT, 'workflows'), p => p.endsWith('.mjs')).map(checkWorkflow);
   const frontDoors = skillFiles.filter(f => f.includes(`${join('skills', 'orchestration')}`) || /\/orchestration\//.test(f)).map(checkFrontDoor);
 
+  // Maintenance lifecycle: VERSION/CHANGELOG parity + migration scripts parse.
+  const lifecycle = checkLifecycle();
+  const migrations = walk(join(ROOT, 'migrations'), p => p.endsWith('.sh')).map(checkMigration);
+
   const mdFiles = walk(ROOT, p => p.endsWith('.md'));
   const links = mdFiles.map(f => checkLinks(f, skillNames, agentNames)).filter(Boolean);
 
@@ -216,12 +265,12 @@ function run() {
   }
   slugCheck.installSlug = installSlug; slugCheck.originSlug = slug;
 
-  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...links, slugCheck];
+  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, ...links, slugCheck];
   const errored = results.filter(r => !r.ok);
   const warned = results.filter(r => r.warnings?.length);
   const report = {
     schema: 'agent-skills/v1',
-    counts: { skills: skills.length, agents: agents.length, workflows: workflows.length, frontDoors: frontDoors.length, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
+    counts: { skills: skills.length, agents: agents.length, workflows: workflows.length, frontDoors: frontDoors.length, migrations: migrations.length, version: lifecycle[0]?.version ?? null, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
     hardFails,
     results,
   };
@@ -281,7 +330,27 @@ function selfTest() {
     if (assert(graded)) pass++;
     else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
   }
-  const total = cases.length + wfCases.length + fdCases.length;
+  // Lifecycle teeth: non-SemVer must be rejected; a migration that doesn't parse must be rejected.
+  const semverCases = [
+    ['semver-good', '1.2.3', v => v === true],
+    ['semver-bad', 'v1.2', v => v === false],
+    ['semver-4seg', '1.2.3.4', v => v === false],
+  ];
+  for (const [label, input, assert] of semverCases) {
+    if (assert(isSemver(input))) pass++;
+    else failures.push(`${label}: isSemver("${input}") wrong`);
+  }
+  const mgCases = [
+    ['mg-syntax-error', 'if [ -f x ]; then\n  echo unterminated\n', f => f.errors.some(e => /does not parse/.test(e))],
+  ];
+  for (const [label, content, assert] of mgCases) {
+    const fp = join(tmp, `${label}.sh`);
+    writeFileSync(fp, content);
+    const graded = checkMigration(fp);
+    if (assert(graded)) pass++;
+    else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
+  }
+  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length;
   rmSync(tmp, { recursive: true, force: true });
   return { total, pass, failures };
 }
@@ -301,7 +370,7 @@ const { report, errored, hardFails } = run();
 if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
 
 const c = report.counts;
-console.log(`\nskills repo verification — ${c.skills} skills, ${c.agents} agents, ${c.workflows} workflows, ${c.frontDoors} front-doors, ${c.mdFiles} md files`);
+console.log(`\nskills repo verification — v${c.version} · ${c.skills} skills, ${c.agents} agents, ${c.workflows} workflows, ${c.frontDoors} front-doors, ${c.migrations} migrations, ${c.mdFiles} md files`);
 console.log(`  install slug: ${report.results.find(r => r.kind === 'install-slug')?.installSlug ?? '—'} (origin: ${report.results.find(r => r.kind === 'install-slug')?.originSlug ?? '—'})`);
 for (const r of report.results) {
   for (const e of r.errors) console.log(`  ✗ ${r.file} [${r.kind}] ${e}`);
