@@ -41,6 +41,29 @@ Pick the skills you want and which agents to install them on. (You can also just
 `SKILL.md` into your agent's skills dir, or point your `AGENTS.md` at this repo's
 [`AGENTS.md`](AGENTS.md).)
 
+## Use it
+
+Once installed, there's nothing to run — the skills are instructions your agent loads. Three
+ways to reach for them, from least to most explicit:
+
+1. **Just work — it applies itself.** Your `AGENTS.md` / `CLAUDE.md` points at the doctrine, and
+   each skill's `description` carries triggers, so the agent picks the right one when the moment
+   matches — say "prove this actually works" and it reaches for `verify-capability`; "try to
+   break this parser" pulls in `adversarial-harden`. You don't have to name them.
+2. **Invoke one explicitly.** If your harness exposes skills as slash commands, type
+   `/verify-capability`. Otherwise just name it: *"use the verify-capability skill on X."*
+3. **Kick off a workflow or subagent.** The front doors run the whole pipeline:
+   - *"Ship `<feature>` using ship-feature — build → verify → harden, gate at each phase."*
+   - *"Maintain the skills kit using maintain-skills."*
+   - *"Use the hardener subagent to break this."*
+
+   In **Claude Code** you can also run the orchestrators as one-command [dynamic
+   workflows](https://code.claude.com/docs/en/workflows):
+   `Workflow({ scriptPath: "workflows/ship-feature.mjs", args: "dark-mode toggle" })`.
+
+**Updating later:** run `maintain-skills` (it pulls the latest, runs migrations, then
+re-verifies). **Check what's loaded:** ask your agent *"which skills do you have available?"*
+
 ## What's in here
 
 ### Skills (`skills/`)
