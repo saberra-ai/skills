@@ -3,6 +3,20 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.3.1] — 2026-06-27
+
+### Added
+- **`install.sh`** — a vetted, portable POSIX-`sh` installer (no bash arrays, no `[[ ]]`, no PATH
+  assumptions). Reads `manifest.json` and installs every skill/agent/workflow + the doctrine.
+  Meant to be piped to `sh`, so your interactive shell never parses it:
+  `curl -fsSL https://raw.githubusercontent.com/saberra-ai/skills/main/install.sh | sh`.
+
+### Fixed
+- Install no longer depends on an agent improvising a shell script — earlier that produced
+  bash-array/`PATH` syntax that **choked in fish/zsh**. The shipped installer is POSIX and
+  CI-pinned: the validator runs `sh -n` on it and rejects any `name=(…)` array or `[[ … ]]`
+  bashism, so it can't regress into a non-portable form. (self-test gains a teeth case)
+
 ## [0.3.0] — 2026-06-27
 
 ### Added

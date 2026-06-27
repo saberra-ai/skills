@@ -237,11 +237,33 @@ function checkMigration(file) {
   return grade(file, 'migration', errors, [], {});
 }
 
+// The installer must be POSIX sh, not bash. `sh -n` (dash on CI) rejects bashisms — arrays,
+// [[ ]] — so a non-portable installer that would choke in a user's fish/zsh fails here. This
+// pins the fix for the "Fish shell choked on the bash array syntax" report.
+function checkInstaller(file) {
+  const errors = [];
+  try {
+    execFileSync('sh', ['-n', file], { stdio: 'pipe', timeout: 10_000 });
+  } catch (e) {
+    const msg = (e.stderr?.toString() || e.message).split('\n').find(l => l.trim()) || 'parse failed';
+    errors.push(`not POSIX sh (sh -n): ${msg.trim()}`);
+  }
+  // Scan executable lines only — a comment mentioning "[[ ]]" or arrays isn't a bashism.
+  const code = readFileSync(file, 'utf8').split('\n').filter(l => !/^\s*#/.test(l)).join('\n');
+  if (/^\s*\w+=\(/m.test(code)) errors.push('uses a bash array (name=( … )) — not POSIX; will break in dash/fish-piped-sh');
+  if (/\[\[/.test(code)) errors.push('uses [[ … ]] — bashism, not POSIX');
+  return grade(file, 'installer', errors, [], {});
+}
+
 // internal markdown links must resolve (skip http/anchors); [[wikilinks]] must
 // name a real skill/agent if any exist.
 function checkLinks(file, skillNames, agentNames) {
   const errors = [];
-  const text = readFileSync(file, 'utf8');
+  // Strip code (fenced blocks + inline spans) first — a doc that *documents* shell syntax like
+  // `[[ … ]]` or a `[text](url)` example isn't a real link/wikilink. Link checks are prose-only.
+  const text = readFileSync(file, 'utf8')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`[^`]*`/g, '');
   for (const m of text.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
     const t = m[1].split('#')[0].trim();
     if (!t || /^(https?:|mailto:)/.test(t)) continue;
@@ -286,6 +308,10 @@ function run() {
   // Install manifest: the queryable index agents fetch — must cover every discovered file.
   const manifestCheck = checkManifest(skillFiles, agentFiles, workflowFiles, lifecycle[0]?.version);
 
+  // The portable installer must stay POSIX sh (no bashisms) so it can't break in non-bash shells.
+  const installerPath = join(ROOT, 'install.sh');
+  const installerCheck = existsSync(installerPath) ? checkInstaller(installerPath) : null;
+
   const mdFiles = walk(ROOT, p => p.endsWith('.md'));
   const links = mdFiles.map(f => checkLinks(f, skillNames, agentNames)).filter(Boolean);
 
@@ -302,7 +328,7 @@ function run() {
   }
   slugCheck.installSlug = installSlug; slugCheck.originSlug = slug;
 
-  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, manifestCheck, ...links, slugCheck];
+  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, manifestCheck, ...(installerCheck ? [installerCheck] : []), ...links, slugCheck];
   const errored = results.filter(r => !r.ok);
   const warned = results.filter(r => r.warnings?.length);
   const report = {
@@ -387,6 +413,14 @@ function selfTest() {
     if (assert(graded)) pass++;
     else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
   }
+  // Installer teeth: a bash-array installer must be rejected (the fish-shell breakage).
+  {
+    const fp = join(tmp, 'bad-install.sh');
+    writeFileSync(fp, '#!/bin/sh\nfiles=(a b c)\necho "${files[@]}"\n');
+    const graded = checkInstaller(fp);
+    if (graded.errors.some(e => /bash array|not POSIX/.test(e))) pass++;
+    else failures.push(`installer-bashism: expected rejection, got [${graded.errors.join('; ')}]`);
+  }
   // Manifest teeth: a discovered skill absent from the manifest must be flagged (silent-drop guard).
   {
     const phantom = join(ROOT, 'skills', 'engineering', '__selftest_phantom__', 'SKILL.md');
@@ -394,7 +428,7 @@ function selfTest() {
     if (graded.errors.some(e => /manifest missing skill/.test(e))) pass++;
     else failures.push(`manifest-missing: expected a missing-skill error, got [${graded.errors.join('; ')}]`);
   }
-  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length + 1;
+  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length + 2;
   rmSync(tmp, { recursive: true, force: true });
   return { total, pass, failures };
 }

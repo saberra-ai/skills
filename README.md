@@ -10,6 +10,25 @@ Distilled from real, shipped work — not aspirational.
 
 ## Install
 
+### Shell one-liner (portable — fish / zsh / bash all fine)
+
+A vetted POSIX-`sh` installer. Piped to `sh`, so your interactive shell never parses it —
+no bash arrays, no `PATH` assumptions:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/saberra-ai/skills/main/install.sh | sh
+```
+
+It reads the manifest and installs every skill, agent, workflow, and the doctrine. Override
+where things land (the env var goes *before* `sh`, so it's shell-agnostic too):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/saberra-ai/skills/main/install.sh | SKILLS_DIR=$HOME/.codex/skills sh
+```
+
+(`SKILLS_DIR`, `AGENTS_DIR`, `WORKFLOWS_DIR`, `REF` are all overridable. Needs only `curl` or
+`wget` + `sh`.)
+
 ### Any AI agent — copy-paste prompt (no tools required)
 
 Works with any agent that can fetch a URL and write a file (Claude Code, Cursor, Codex,

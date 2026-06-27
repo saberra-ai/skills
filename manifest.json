@@ -1,6 +1,6 @@
 {
   "name": "saberra-ai/skills",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repo": "https://github.com/saberra-ai/skills",
   "raw_base": "https://raw.githubusercontent.com/saberra-ai/skills/main",
   "doctrine": "AGENTS.md",
