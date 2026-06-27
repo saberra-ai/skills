@@ -20,6 +20,7 @@ import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdtemp
 import { join, dirname, basename, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RESERVED = ['claude', 'anthropic'];
@@ -114,6 +115,50 @@ function checkAgent(file) {
   return grade(file, 'agent', errors, warnings, { name });
 }
 
+// A runnable workflow (workflows/*.mjs) must actually parse with the real `node`
+// (real dependency, real input — not a regex guess) and declare the dynamic-workflow
+// contract it claims to implement: an exported `meta` with name/description/phases, and
+// real orchestration (at least one phase() + agent() call). A workflow that links from a
+// skill but doesn't parse is the silent-skip rot in script form.
+function checkWorkflow(file) {
+  const errors = [], warnings = [];
+  try {
+    // execFile (not shell) → no arg injection; --check parses only, never executes;
+    // timeout bounds a pathological/hanging file so the runner can't stall.
+    execFileSync(process.execPath, ['--check', file], { stdio: 'pipe', timeout: 10_000 });
+  } catch (e) {
+    const msg = (e.stderr?.toString() || e.message).split('\n').find(l => l.trim()) || 'parse failed';
+    errors.push(`does not parse (node --check): ${msg.trim()}`);
+    return grade(file, 'workflow', errors, warnings, {});
+  }
+  const src = readFileSync(file, 'utf8');
+  if (!/export\s+const\s+meta\s*=/.test(src)) errors.push('no `export const meta = {…}` (workflow contract)');
+  else {
+    if (!/\bname\s*:/.test(src)) errors.push('meta missing `name`');
+    if (!/\bdescription\s*:/.test(src)) errors.push('meta missing `description`');
+    if (!/\bphases\s*:/.test(src)) warnings.push('meta has no `phases` (progress groups)');
+  }
+  if (!/\bphase\s*\(/.test(src)) errors.push('no phase() call — not an orchestration');
+  if (!/\bagent\s*\(/.test(src)) errors.push('no agent() call — orchestrates nothing');
+  if (/^\s*return\b/m.test(src)) errors.push('top-level `return` (illegal in a module — node --check would already flag this)');
+  return grade(file, 'workflow', errors, warnings, {});
+}
+
+// An orchestration/ skill is a workflow front door, not just a list of steps. It must be
+// driveable: an explicit kickoff trigger and ≥2 gated phases. This is what turns "a clean
+// set of steps" into "a workflow someone can kick off and follow".
+function checkFrontDoor(file) {
+  const errors = [], warnings = [];
+  const body = readFileSync(file, 'utf8');
+  if (!/kick it off|kick off|paste this/i.test(body)) errors.push('no kickoff trigger (a "paste this to your agent" entry point)');
+  const phases = (body.match(/^##\s+Phase\s+\d/gim) || []).length;
+  const gates = (body.match(/\*\*Gate:\*\*/g) || []).length;
+  if (phases < 2) errors.push(`only ${phases} numbered phases — a workflow needs an ordered sequence`);
+  if (gates < 2) errors.push(`only ${gates} explicit gates — phases must be gated, not just listed`);
+  if (!/done when/i.test(body)) warnings.push('no "Done when" completion criteria');
+  return grade(file, 'frontdoor', errors, warnings, {});
+}
+
 // internal markdown links must resolve (skip http/anchors); [[wikilinks]] must
 // name a real skill/agent if any exist.
 function checkLinks(file, skillNames, agentNames) {
@@ -150,6 +195,11 @@ function run() {
   const skillNames = new Set(skills.map(s => s.name).filter(Boolean));
   const agentNames = new Set(agents.map(a => a.name).filter(Boolean));
 
+  // Runnable orchestrators + workflow front-door skills — what makes this a usable
+  // workflow, not just a clean set of steps. Both discovered dynamically (no silent skip).
+  const workflows = walk(join(ROOT, 'workflows'), p => p.endsWith('.mjs')).map(checkWorkflow);
+  const frontDoors = skillFiles.filter(f => f.includes(`${join('skills', 'orchestration')}`) || /\/orchestration\//.test(f)).map(checkFrontDoor);
+
   const mdFiles = walk(ROOT, p => p.endsWith('.md'));
   const links = mdFiles.map(f => checkLinks(f, skillNames, agentNames)).filter(Boolean);
 
@@ -166,12 +216,12 @@ function run() {
   }
   slugCheck.installSlug = installSlug; slugCheck.originSlug = slug;
 
-  const results = [...skills, ...agents, ...links, slugCheck];
+  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...links, slugCheck];
   const errored = results.filter(r => !r.ok);
   const warned = results.filter(r => r.warnings?.length);
   const report = {
     schema: 'agent-skills/v1',
-    counts: { skills: skills.length, agents: agents.length, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
+    counts: { skills: skills.length, agents: agents.length, workflows: workflows.length, frontDoors: frontDoors.length, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
     hardFails,
     results,
   };
@@ -192,11 +242,22 @@ function selfTest() {
     ['empty body', '---\nname: emptybody\ndescription: Use when testing that a skill with no body content is rejected here.\n---\n   ', f => f.errors.some(e => /empty body/.test(e))],
     ['desc too long', `---\nname: longdesc\ndescription: ${'x'.repeat(1100)}\n---\nbody`, f => f.errors.some(e => /exceeds 1024/.test(e))],
   ];
+  // Workflow fixtures: a non-parsing script, a script with no `meta`, and one that
+  // orchestrates nothing must all be rejected.
+  const wfCases = [
+    ['wf-syntax-error', 'export const meta = {\nphase(\nthis is not valid js', f => f.errors.some(e => /does not parse/.test(e))],
+    ['wf-no-meta', 'phase("x");\nawait agent("do");\n', f => f.errors.some(e => /workflow contract/.test(e))],
+    ['wf-no-orchestration', 'export const meta = { name: "x", description: "y", phases: [] };\n', f => f.errors.some(e => /orchestrat/.test(e))],
+  ];
+  // Front-door fixture: an orchestration skill that's just steps (no kickoff, no gates) must be rejected.
+  const fdCases = [
+    ['fd-just-steps', '---\nname: x\ndescription: Use when shipping. a workflow.\n---\n# X\n1. do a\n2. do b\n', f => f.errors.some(e => /kickoff|gates|phases/.test(e))],
+  ];
+
   const tmp = mkdtempSync(join(tmpdir(), 'skills-selftest-'));
   let pass = 0;
   const failures = [];
   for (const [label, content, assert] of cases) {
-    // name-from-dir cases need the dir basename to differ; use the label-derived dir
     // name!=dir needs a dir whose basename differs from the frontmatter name.
     const dir = label === 'name!=dir' ? join(tmp, 'rightdir') : join(tmp, label.replace(/\W+/g, '-'));
     const fp = join(dir, 'SKILL.md');
@@ -206,8 +267,23 @@ function selfTest() {
     if (assert(graded)) pass++;
     else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
   }
+  for (const [label, content, assert] of wfCases) {
+    const fp = join(tmp, `${label}.mjs`);
+    writeFileSync(fp, content);
+    const graded = checkWorkflow(fp);
+    if (assert(graded)) pass++;
+    else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
+  }
+  for (const [label, content, assert] of fdCases) {
+    const fp = join(tmp, `${label}.md`);
+    writeFileSync(fp, content);
+    const graded = checkFrontDoor(fp);
+    if (assert(graded)) pass++;
+    else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
+  }
+  const total = cases.length + wfCases.length + fdCases.length;
   rmSync(tmp, { recursive: true, force: true });
-  return { total: cases.length, pass, failures };
+  return { total, pass, failures };
 }
 
 // ---- main ------------------------------------------------------------------
@@ -225,7 +301,7 @@ const { report, errored, hardFails } = run();
 if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
 
 const c = report.counts;
-console.log(`\nskills repo verification — ${c.skills} skills, ${c.agents} agents, ${c.mdFiles} md files`);
+console.log(`\nskills repo verification — ${c.skills} skills, ${c.agents} agents, ${c.workflows} workflows, ${c.frontDoors} front-doors, ${c.mdFiles} md files`);
 console.log(`  install slug: ${report.results.find(r => r.kind === 'install-slug')?.installSlug ?? '—'} (origin: ${report.results.find(r => r.kind === 'install-slug')?.originSlug ?? '—'})`);
 for (const r of report.results) {
   for (const e of r.errors) console.log(`  ✗ ${r.file} [${r.kind}] ${e}`);

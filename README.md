@@ -28,7 +28,7 @@ dir, or point your `AGENTS.md` at this repo's [`AGENTS.md`](AGENTS.md).)
 | **engineering/verify-capability** | Prove a capability works: real input → objective metric → inspectable artifact → a runner that **fails loud on silent skips**. Green ≠ verified. |
 | **engineering/adversarial-harden** | Break fast-built code on purpose — find REAL bugs with a repro, fix forward with a regression test, pin invariants. |
 | **decisions/research-decision** | Resolve an unsure product/eng call: web-search the best practice, cite it, **recommend** (not survey). |
-| **orchestration/ship-feature** | The build → verify → harden pipeline for shipping a feature the disciplined way. |
+| **orchestration/ship-feature** | The **front-door workflow** — kick off one feature and it drives build → verify → harden as gated phases that hand off to the skills above. Runnable two ways: drive the phases manually in any harness, or run [`workflows/ship-feature.mjs`](workflows/ship-feature.mjs) as a one-command [dynamic workflow](https://code.claude.com/docs/en/workflows) in Claude Code. |
 
 ### Subagents (`agents/`)
 
