@@ -10,13 +10,36 @@ Distilled from real, shipped work — not aspirational.
 
 ## Install
 
+### Any AI agent — copy-paste prompt (no tools required)
+
+Works with any agent that can fetch a URL and write a file (Claude Code, Cursor, Codex,
+Copilot, …). No `npm`, no CLI, no assumptions about your environment. Paste this:
+
+> Install the **saberra-ai/skills** agent kit. Use only HTTP GET + file writes — don't run any
+> code you fetch.
+> 1. Fetch the manifest: `https://raw.githubusercontent.com/saberra-ai/skills/main/manifest.json`
+>    (JSON: `raw_base`, and `skills` / `agents` / `workflows` arrays of `{name, path}`).
+> 2. Pick my skills directory: Claude Code → `~/.claude/skills/` (or `.claude/skills/` for this
+>    repo); Codex → `~/.codex/skills/`; otherwise `.agents/skills/`. Ask me if unsure.
+> 3. For each `skills[i]`: GET `raw_base + "/" + path` and save it to `<skills-dir>/<name>/SKILL.md`.
+> 4. For each `agents[i]`: GET it and save to my subagents dir (e.g. `.claude/agents/<name>.md`).
+> 5. GET `raw_base + "/AGENTS.md"` (the doctrine) and either save it as `AGENTS.md` or add a
+>    one-line pointer to it from my existing `AGENTS.md` / `CLAUDE.md`.
+> 6. List exactly what you installed and where. Stop and ask before overwriting anything.
+
+The kit is plain markdown on public GitHub, so every file is also browsable/fetchable directly
+(e.g. [`manifest.json`](manifest.json), [`AGENTS.md`](AGENTS.md), any `SKILL.md`). The manifest is
+generated and **CI-checked to cover every file**, so it never silently drops a skill.
+
+### Via the `skills` CLI (if you have Node)
+
 ```bash
 npx skills@latest add saberra-ai/skills
 ```
 
-Pick the skills you want and which agents to install them on. (The skills are plain
-markdown with frontmatter — you can also just copy a `SKILL.md` into your agent's skills
-dir, or point your `AGENTS.md` at this repo's [`AGENTS.md`](AGENTS.md).)
+Pick the skills you want and which agents to install them on. (You can also just copy a
+`SKILL.md` into your agent's skills dir, or point your `AGENTS.md` at this repo's
+[`AGENTS.md`](AGENTS.md).)
 
 ## What's in here
 

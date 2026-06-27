@@ -1,0 +1,57 @@
+{
+  "name": "saberra-ai/skills",
+  "version": "0.3.0",
+  "repo": "https://github.com/saberra-ai/skills",
+  "raw_base": "https://raw.githubusercontent.com/saberra-ai/skills/main",
+  "doctrine": "AGENTS.md",
+  "skills": [
+    {
+      "name": "adversarial-harden",
+      "path": "skills/engineering/adversarial-harden/SKILL.md"
+    },
+    {
+      "name": "maintain-skills",
+      "path": "skills/orchestration/maintain-skills/SKILL.md"
+    },
+    {
+      "name": "mirror-reference",
+      "path": "skills/engineering/mirror-reference/SKILL.md"
+    },
+    {
+      "name": "research-decision",
+      "path": "skills/decisions/research-decision/SKILL.md"
+    },
+    {
+      "name": "ship-feature",
+      "path": "skills/orchestration/ship-feature/SKILL.md"
+    },
+    {
+      "name": "verify-capability",
+      "path": "skills/engineering/verify-capability/SKILL.md"
+    }
+  ],
+  "agents": [
+    {
+      "name": "capability-verifier",
+      "path": "agents/capability-verifier.md"
+    },
+    {
+      "name": "hardener",
+      "path": "agents/hardener.md"
+    },
+    {
+      "name": "reference-builder",
+      "path": "agents/reference-builder.md"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "maintain",
+      "path": "workflows/maintain.mjs"
+    },
+    {
+      "name": "ship-feature",
+      "path": "workflows/ship-feature.mjs"
+    }
+  ]
+}

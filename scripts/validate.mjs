@@ -21,6 +21,7 @@ import { join, dirname, basename, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
+import { buildManifest } from './gen-manifest.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const RESERVED = ['claude', 'anthropic'];
@@ -192,6 +193,38 @@ function checkLifecycle() {
   return out;
 }
 
+// manifest.json is what an AI agent fetches to install the kit with only HTTP-GET + write.
+// If it drops a skill, that skill silently never installs — the install-time silent skip. So
+// cross-check the committed manifest against an independENT rebuild (buildManifest, the same
+// generator) AND the validator's own discovered file set: every discovered skill/agent/workflow
+// must appear, the version must match, and there must be no phantom entries.
+function checkManifest(skillFiles, agentFiles, workflowFiles, version) {
+  const errors = [];
+  const mPath = join(ROOT, 'manifest.json');
+  if (!existsSync(mPath)) { errors.push('no manifest.json — run `npm run manifest`'); return grade(mPath, 'manifest', errors, [], {}); }
+  let committed;
+  try { committed = JSON.parse(readFileSync(mPath, 'utf8')); }
+  catch { errors.push('manifest.json is not valid JSON'); return grade(mPath, 'manifest', errors, [], {}); }
+
+  const expected = buildManifest(ROOT);
+  if (JSON.stringify(committed) !== JSON.stringify(expected))
+    errors.push('manifest.json is stale — run `npm run manifest` and commit (drifted from the repo)');
+  if (committed.version !== version) errors.push(`manifest version "${committed.version}" != VERSION "${version}"`);
+
+  // Independent cross-check vs the validator's own discovery (not buildManifest's walk).
+  const discovered = {
+    skills: new Set(skillFiles.map(f => relative(ROOT, f).split('\\').join('/'))),
+    agents: new Set(agentFiles.map(f => relative(ROOT, f).split('\\').join('/'))),
+    workflows: new Set(workflowFiles.map(f => relative(ROOT, f).split('\\').join('/'))),
+  };
+  for (const kind of ['skills', 'agents', 'workflows']) {
+    const listed = new Set((committed[kind] || []).map(e => e.path));
+    for (const p of discovered[kind]) if (!listed.has(p)) errors.push(`manifest missing ${kind.slice(0, -1)}: ${p}`);
+    for (const p of listed) if (!discovered[kind].has(p)) errors.push(`manifest lists phantom ${kind.slice(0, -1)}: ${p}`);
+  }
+  return grade(mPath, 'manifest', errors, [], { version: committed.version, skills: (committed.skills || []).length });
+}
+
 // Migration scripts must parse with the real `bash` (same idea as the workflow node --check).
 function checkMigration(file) {
   const errors = [];
@@ -242,12 +275,16 @@ function run() {
 
   // Runnable orchestrators + workflow front-door skills — what makes this a usable
   // workflow, not just a clean set of steps. Both discovered dynamically (no silent skip).
-  const workflows = walk(join(ROOT, 'workflows'), p => p.endsWith('.mjs')).map(checkWorkflow);
+  const workflowFiles = walk(join(ROOT, 'workflows'), p => p.endsWith('.mjs'));
+  const workflows = workflowFiles.map(checkWorkflow);
   const frontDoors = skillFiles.filter(f => f.includes(`${join('skills', 'orchestration')}`) || /\/orchestration\//.test(f)).map(checkFrontDoor);
 
   // Maintenance lifecycle: VERSION/CHANGELOG parity + migration scripts parse.
   const lifecycle = checkLifecycle();
   const migrations = walk(join(ROOT, 'migrations'), p => p.endsWith('.sh')).map(checkMigration);
+
+  // Install manifest: the queryable index agents fetch — must cover every discovered file.
+  const manifestCheck = checkManifest(skillFiles, agentFiles, workflowFiles, lifecycle[0]?.version);
 
   const mdFiles = walk(ROOT, p => p.endsWith('.md'));
   const links = mdFiles.map(f => checkLinks(f, skillNames, agentNames)).filter(Boolean);
@@ -265,7 +302,7 @@ function run() {
   }
   slugCheck.installSlug = installSlug; slugCheck.originSlug = slug;
 
-  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, ...links, slugCheck];
+  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, manifestCheck, ...links, slugCheck];
   const errored = results.filter(r => !r.ok);
   const warned = results.filter(r => r.warnings?.length);
   const report = {
@@ -350,7 +387,14 @@ function selfTest() {
     if (assert(graded)) pass++;
     else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
   }
-  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length;
+  // Manifest teeth: a discovered skill absent from the manifest must be flagged (silent-drop guard).
+  {
+    const phantom = join(ROOT, 'skills', 'engineering', '__selftest_phantom__', 'SKILL.md');
+    const graded = checkManifest([phantom], [], [], readFileSync(join(ROOT, 'VERSION'), 'utf8').trim());
+    if (graded.errors.some(e => /manifest missing skill/.test(e))) pass++;
+    else failures.push(`manifest-missing: expected a missing-skill error, got [${graded.errors.join('; ')}]`);
+  }
+  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length + 1;
   rmSync(tmp, { recursive: true, force: true });
   return { total, pass, failures };
 }
