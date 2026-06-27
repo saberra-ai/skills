@@ -1,6 +1,6 @@
 {
   "name": "@saberra-ai/skills",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Harness-agnostic agent build doctrine + skills + subagents, with a self-verifying validation substrate.",
   "license": "MIT",
   "type": "module",

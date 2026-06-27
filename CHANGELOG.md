@@ -3,6 +3,22 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.6.0] — 2026-06-27
+
+### Changed
+- **`research-decision`** — raised from "web-search 2–3 queries → recommend" to a
+  **depth-matches-stakes** contract, and **enforced it**. New: a depth ladder (quick fork vs
+  **deep**) and a **deep bar** that a quality / "make it the best" / novel / safety decision must
+  clear — **primary sources incl. research papers** (authors/venue/year, not blog summaries), the
+  **canonical references named to mirror**, **breadth fanned out** across sub-dimensions, a **cited
+  rubric** (measurable, re-checkable — not a one-time recommendation), a **critical alignment
+  audit** against the real code, and **grounding that corrects the literature**. Done-when now
+  fails a deep question answered with one search. Motivated by dogfooding: a "make UI/UX/agent the
+  best" question got one narrow search — exactly the failure this rewrite forbids.
+- **`ship-feature`** — Phase 0 gate now enforces research depth: a deep/quality/safety call
+  answered with a single search ⛔ does not pass Frame. Under-researching a high-stakes question
+  is treated as the same failure as not researching it.
+
 ## [0.5.2] — 2026-06-27
 
 ### Changed

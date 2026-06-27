@@ -21,7 +21,13 @@ subagent for a parallel track).
   Phase 2 will measure. Can't name it? You're not ready to build.
 - Unsure of a fork (which approach, bundle-vs-fetch, what UX)? ⛔ **stop and run
   ▶ `research-decision`** — cite, recommend, proceed. Don't guess past a fork.
-- **Gate:** outcome + success-metric named; open forks resolved or explicitly deferred.
+- **Match research depth to stakes.** A reversible fork = a cited search. But a **"make it the
+  best" / quality / novel / safety** call demands the **deep bar**: primary sources (papers, not
+  just blogs) + the canonical references named to mirror + a **cited rubric** — *not one search*.
+  Under-researching a high-stakes question is the same failure as not researching it.
+- **Gate:** outcome + success-metric named; open forks resolved or explicitly deferred; and any
+  research done hit the depth its stakes demanded (deep → primary sources + references + rubric,
+  per `research-decision`'s Done-when). A deep question answered with one search ⛔ does not pass.
 
 ## Phase 1 — Build  ▶ `mirror-reference`  (subagent: `reference-builder`)
 - Find the canon (a reference registry, else search best-in-class OSS), **clone it, read the
