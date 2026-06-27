@@ -11,7 +11,7 @@ Distilled from real, shipped work — not aspirational.
 ## Install
 
 ```bash
-npx skills@latest add victorlopez/skills
+npx skills@latest add saberra-ai/skills
 ```
 
 Pick the skills you want and which agents to install them on. (The skills are plain
