@@ -12,6 +12,11 @@ genesis step; once the spine exists, [`maintain-knowledge-base`](../maintain-kno
 keeps it fresh. The cardinal rule from the start: **honest ⬜ over fake green** — a small
 true KB beats a large hallucinated one.
 
+This KB is the **cold tier** of an agent's memory: the current best practice is "codified
+context as infrastructure" — a *hot constitution* (`CLAUDE.md` / `AGENTS.md`), specialized
+domain agents, and a durable cold knowledge base. Single-file manifests don't scale past a
+modest repo; build the cold tier deliberately and point the hot constitution at it (Phase 5).
+
 > **Kick it off — paste this to your agent:**
 > *"Bootstrap a knowledge base using build-knowledge-base: survey, pick the format, author
 > the spine from source, generate the map, wire enforcement — gate-green, stop at every ⛔."*
@@ -33,7 +38,16 @@ didn't read in the code** — every claim cites its source.
   description, `source:` path, a `source_sha`/freshness stamp), one concept per file, an
   **index with progressive disclosure** (index → section → doc; follow one branch, stop). Mirror
   a proven model — [Diátaxis](https://diataxis.fr) for doc *types* (explanation vs reference vs
-  how-to), an OKF-style bundle for the *shape*, [llms.txt](https://llmstxt.org) for the machine map.
+  how-to), an OKF-style markdown+frontmatter bundle for the *shape*, [llms.txt](https://llmstxt.org)
+  for the machine map.
+- **Separate the substrate from the standard, and don't marry a draft.** Keep the files plain
+  markdown + frontmatter so the KB ports trivially if a chosen format stalls or changes (e.g. OKF
+  is a v0.1 draft with little adoption — fine to mirror, not to depend on). Near-zero lock-in is a
+  feature: pick the format for ergonomics, not as a bet.
+- **The format is the cheap part; the moat is enforcement + taxonomy.** What endures is Phase 4's
+  enforcement and being *intentional about doc-types* (most codebase KBs are explanation +
+  reference — say which, don't drift). A pretty format with no coverage/freshness gate rots; plain
+  markdown with one does not.
 - Create the skeleton: root index + empty section indexes. Nothing fabricated yet.
 - **Gate:** a frontmatter schema + a navigable index skeleton exist, cited to the format you mirrored.
 

@@ -3,6 +3,16 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.5.1] — 2026-06-27
+
+### Changed
+- **`build-knowledge-base`** — folded in learnings from validating OKF against the field
+  (Diátaxis, llms.txt adoption, "codified context as infrastructure"): separate the *substrate*
+  (plain markdown+frontmatter, near-zero lock-in) from any *standard* and don't depend on a draft
+  format (OKF is v0.1); the durable moat is enforcement + an intentional doc-type taxonomy, not
+  the format; framed the KB as the cold tier of an agent's tiered memory (hot constitution +
+  domain agents + cold KB).
+
 ## [0.5.0] — 2026-06-27
 
 ### Added
