@@ -3,6 +3,17 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.5.0] — 2026-06-27
+
+### Added
+- **`build-knowledge-base`** skill (orchestration) — the genesis counterpart to
+  `maintain-knowledge-base`: bootstrap a knowledge base for a codebase that has none.
+  Survey the real structure, choose an enforceable format (frontmatter + progressive-
+  disclosure index + machine-readable map, mirroring Diátaxis / OKF / llms.txt), author
+  the high-traffic spine **from source** (cited, freshness-stamped), define a coverage
+  contract, and wire validators into the gate — then hand off to `maintain-knowledge-base`.
+  The two are bookends: build, then maintain. Built + validated via `ship-feature`.
+
 ## [0.4.0] — 2026-06-27
 
 ### Added

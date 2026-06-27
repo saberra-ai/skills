@@ -1,0 +1,80 @@
+---
+name: build-knowledge-base
+description: Bootstrap a knowledge base for a codebase that has none — survey the real structure, choose an enforceable format (frontmatter + index + machine-readable map), author the high-traffic spine FROM the source (cited, with freshness stamps), define a coverage contract, and wire validators into the gate — then hand off to maintain-knowledge-base. Use when a repo lacks docs an LLM or new engineer can navigate, or has only scattered/stale README fragments.
+---
+
+# Build a knowledge base — the bootstrap
+
+Most codebases have no map: an LLM (or a new engineer) reverse-engineers intent from
+source every time. This creates that map from scratch — accurate, navigable, and
+machine-readable — and leaves behind the *enforcement* that keeps it honest. It is the
+genesis step; once the spine exists, [`maintain-knowledge-base`](../maintain-knowledge-base/SKILL.md)
+keeps it fresh. The cardinal rule from the start: **honest ⬜ over fake green** — a small
+true KB beats a large hallucinated one.
+
+> **Kick it off — paste this to your agent:**
+> *"Bootstrap a knowledge base using build-knowledge-base: survey, pick the format, author
+> the spine from source, generate the map, wire enforcement — gate-green, stop at every ⛔."*
+
+Keep the checklist visible; a phase isn't done until its **Gate** holds. **Write nothing you
+didn't read in the code** — every claim cites its source.
+
+## Phase 0 — Survey  (map the territory; write nothing yet)
+- Enumerate the *real* structure: build manifests (Cargo/package.json/go.mod…), top-level
+  dirs, entry points, the major subsystems, the public API surface, and where decisions live
+  (ADRs, design docs, commit history). Note the audience (humans + LLMs) and the **high-traffic
+  spine** — the 20% of the system 80% of work touches.
+- Don't invent taxonomy from a template; let the codebase's real seams define the sections.
+- **Gate:** a one-page inventory — subsystems, entry points, decision sources — and the spine
+  identified. If you can't name the spine, you haven't read enough.
+
+## Phase 1 — Choose an enforceable format  ▶ `mirror-reference`
+- Pick a doc contract, don't improvise one: **per-doc YAML frontmatter** (type, title, one-line
+  description, `source:` path, a `source_sha`/freshness stamp), one concept per file, an
+  **index with progressive disclosure** (index → section → doc; follow one branch, stop). Mirror
+  a proven model — [Diátaxis](https://diataxis.fr) for doc *types* (explanation vs reference vs
+  how-to), an OKF-style bundle for the *shape*, [llms.txt](https://llmstxt.org) for the machine map.
+- Create the skeleton: root index + empty section indexes. Nothing fabricated yet.
+- **Gate:** a frontmatter schema + a navigable index skeleton exist, cited to the format you mirrored.
+
+## Phase 2 — Author the spine from source  (cited; don't boil the ocean)
+- Write the spine first: an architecture overview, the top subsystems, and the entry points —
+  each **authored by reading the actual code**, citing `file:line`, with the freshness stamp set
+  to the current source sha. Match the codebase's voice; be concise (a right-sized doc, not padding).
+- Defer the long tail explicitly as ⬜ planned coverage — a real "not yet" beats a hallucinated
+  page.
+- **Gate:** the spine is documented from source (every doc cites code + carries a freshness
+  stamp); deferred areas are listed as honest gaps, none faked.
+
+## Phase 3 — Machine-readable map  (for LLMs, from day one)
+- Generate a `llms.txt`-style entry map **from the docs' frontmatter** (H1 + summary +
+  per-section link lists with one-line descriptions; deep/optional reference last). Complete by
+  construction — every doc listed.
+- **Gate:** the map regenerates deterministically, lists every doc, and every link resolves.
+
+## Phase 4 — Coverage contract + enforce  ▶ `verify-capability`
+- Write down what **must** be covered (each subsystem/module/decision) with explicit, reasoned
+  exemptions — and wire it, plus a frontmatter lint and the map check, into the **gate and CI**
+  as a runner that **fails loud** on an undocumented unit, a stale doc, or an incomplete map.
+  This is what makes the KB survive contact with a moving codebase.
+- **Gate:** a deliberately-undocumented unit or a stale edit makes the gate go red — proven, then
+  green once fixed.
+
+## Phase 5 — Integrate + hand off
+- Commit through the gate; **rebase, never force-push**; targeted `git add`. Point the repo's
+  agent instructions (`CLAUDE.md`/`AGENTS.md`/README) at the new index so it's discoverable.
+  Record the deferred coverage as the backlog for [`maintain-knowledge-base`](../maintain-knowledge-base/SKILL.md).
+- **Gate:** gate green; the KB is linked from the repo's front door; maintenance owner/cadence noted.
+
+## Done when
+A new engineer or LLM can start at one index and navigate the system; the high-traffic spine is
+documented **from source** (cited, freshness-stamped), a complete machine-readable map exists, a
+coverage contract + freshness + map checks run in the gate and fail loud on regressions, deferred
+areas are honest ⬜ gaps (not faked), and `maintain-knowledge-base` can take it from here — all
+gate-green, integrated without a force-push.
+
+## How to run it
+- **Any harness — drive it manually.** Follow the phases; the agent surveys, picks the format,
+  authors the spine from source, generates the map, wires enforcement, integrates — pausing at ⛔.
+- **Then maintain.** This builds the substrate; schedule [`maintain-knowledge-base`](../maintain-knowledge-base/SKILL.md)
+  to keep it true as the code moves.
