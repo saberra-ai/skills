@@ -48,6 +48,41 @@ captured so the quality is reproducible without re-explaining it each session. T
 non-negotiable: **a verification substrate** (a runner that can't be fooled by a green
 suite) is what turns "build it well" from a vibe into a guarantee.
 
+## Verification
+
+This repo holds *itself* to the bar it preaches (green ≠ verified). The capability under
+test — **"every skill/agent is well-formed and the repo installs"** — is checked by a runner,
+not by trust:
+
+```bash
+npm test          # self-test (proves the runner has teeth) → validate the repo
+npm run validate  # just validate
+```
+
+[`scripts/validate.mjs`](scripts/validate.mjs) enforces the real [Agent Skills
+contract](https://agentskills.io/specification) the `skills` CLI reads — `name`
+(lowercase/digits/hyphens, ≤64, not reserved, **must match its directory**) and `description`
+(≤1024, third-person, with a trigger cue) — plus cross-link integrity and an install-slug
+regression pin (the README's `skills add <slug>` must equal the git origin). It climbs the
+ladder:
+
+| Rung | What it means here |
+|---|---|
+| **S** | every `SKILL.md` / agent parses |
+| **SS** | checked against the *real* frontmatter schema, not a guess |
+| **SSS** | objective metric — per-file pass/fail + counts, no prose |
+| **SSS+** | inspectable artifact — `validation-report.json` |
+| **SSS++** | contract parity — `name === dir`, install slug === origin |
+| **SSS+++** | **no silent skip** — zero discovered files is a hard fail; every file is graded; `--self-test` injects malformed fixtures and fails if any slips through |
+
+It runs in [CI](.github/workflows/validate.yml) on every push and PR, so a malformed skill, a
+broken cross-link, or a drifted install slug fails the build — and the artifact is uploaded
+for inspection. (It already caught four real broken links and a slug drift on first run.)
+
+**Honest gap:** the live end-to-end `npx skills add saberra-ai/skills` is an *interactive*
+selection flow, so it isn't run non-interactively in CI. The runner verifies the contract that
+command reads — the structure and schema it consumes — rather than faking a headless install.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

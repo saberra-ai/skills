@@ -1,0 +1,15 @@
+{
+  "name": "@saberra-ai/skills",
+  "version": "0.1.0",
+  "description": "Harness-agnostic agent build doctrine + skills + subagents, with a self-verifying validation substrate.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/validate.mjs --self-test",
+    "validate": "node scripts/validate.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
