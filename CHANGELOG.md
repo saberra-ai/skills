@@ -3,6 +3,17 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.4.0] — 2026-06-27
+
+### Added
+- **`maintain-knowledge-base`** skill (orchestration) — the documentation bookend to
+  `ship-feature`: a recurring loop to keep a docs/knowledge base accurate, covered,
+  navigable, and machine-readable. Codifies hard-won learnings — audit with the
+  validators, **honest drift-refresh** (re-verify a drifted doc against current source
+  before refreshing freshness; never blind-bump a sha), fill real coverage gaps from
+  source (no padding), maintain a generated `llms.txt`-style map, and **enforce** it in
+  the gate so it can't silently rot. Built + validated via `ship-feature`.
+
 ## [0.3.1] — 2026-06-27
 
 ### Added

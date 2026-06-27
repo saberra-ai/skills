@@ -1,6 +1,6 @@
 {
   "name": "saberra-ai/skills",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "repo": "https://github.com/saberra-ai/skills",
   "raw_base": "https://raw.githubusercontent.com/saberra-ai/skills/main",
   "doctrine": "AGENTS.md",
@@ -8,6 +8,10 @@
     {
       "name": "adversarial-harden",
       "path": "skills/engineering/adversarial-harden/SKILL.md"
+    },
+    {
+      "name": "maintain-knowledge-base",
+      "path": "skills/orchestration/maintain-knowledge-base/SKILL.md"
     },
     {
       "name": "maintain-skills",
