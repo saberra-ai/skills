@@ -72,3 +72,15 @@ is reversible (backup → act → restore-on-failure).
 The installed copy is at the new version (or cleanly rolled back), every applicable migration
 either completed or is honestly left to retry, the validator is **green on the upgraded copy**,
 and the user has a what-changed summary — with nothing committed on their behalf.
+
+## Receipt
+
+Prove the upgrade landed safely and was re-verified (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: installed kit updated to the new version safely — or cleanly rolled back
+- Version: <from → to>
+- Migrations: <which ran · each done-marked or left retrying with its reason>
+- Re-verify: <validator green on the upgraded copy — the step that proves it didn't break>
+- What's NOT proven: <left to the user — nothing auto-committed; any dual-install path not synced>
+```

@@ -36,3 +36,15 @@ Fast-built code ships latent bugs. Find the real ones before users (or reviewers
 Each finding is REAL (with repro/path) or CLEARED (with the reason); real ones are fixed
 forward with a regression test and a pinned invariant. "Audited N, found M, cleared K" —
 don't manufacture findings.
+
+## Receipt
+
+Account for what you broke and what you couldn't (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: <risky surface> hardened — real bugs fixed, no findings manufactured
+- Surface: <what was attacked — decoder / concurrency / shell-out / parser>
+- Audited: <N audited · M REAL fixed · K cleared (each with its reason)>
+- Regression: <the test that fails before / passes after; invariant pinned with teeth>
+- What's NOT proven: <surfaces not yet fuzzed / known residual risk left in>
+```

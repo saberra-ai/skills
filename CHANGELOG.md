@@ -3,6 +3,27 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.7.0] — 2026-06-28
+
+### Added
+- **Receipt standard** ([`RECEIPTS.md`](RECEIPTS.md)) — every skill now ends in a `## Receipt`
+  block: a typed, copy-pasteable proof template that states the **claim · real basis · what ran ·
+  result · artifact · what's NOT proven**. The public throughline: *agents that leave proof*, not
+  agents that say "done".
+- **Typed per skill, never one flat template.** A `research-decision` receipt cites sources and
+  recommends (no "command ran"); a `verify-capability` receipt asserts a metric on a real input.
+  Stamping one generic block everywhere would force hollow `N/A` fields — the exact fake-green this
+  kit exists to kill. Each of the 8 skills carries the fields its class owes.
+- **Enforced by the validator.** [`scripts/validate.mjs`](scripts/validate.mjs) now checks every
+  `SKILL.md` for a `## Receipt` section, its fenced template, an honest-gap line, and the typed
+  fields per skill — and `--self-test` injects receipt-broken fixtures (missing section, missing
+  gap, prose-only field, missing field) that **fail loud** if they slip through. A skill without a
+  valid receipt fails CI. (Self-test: 22 malformed fixtures, all rejected.)
+
+### Changed
+- **README hero** — adds the "agents that leave proof" throughline + a `RECEIPTS.md` link above
+  the fold, keeping the existing harness-agnostic voice.
+
 ## [0.6.0] — 2026-06-27
 
 ### Changed

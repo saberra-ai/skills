@@ -87,3 +87,15 @@ bumps), every real coverage gap is filled with a source-grounded doc (and none p
 machine-readable map regenerates complete with all links resolving, those checks are wired into
 the gate/CI and proven to fail loud on fresh drift, and the change is integrated gate-green
 without a force-push — the validators report zero errors and zero unexplained warnings.
+
+## Receipt
+
+Prove you re-verified against source, didn't blind-bump (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: the KB is accurate, complete, and navigable — checked against current source
+- Audited: <validators run · drift + coverage gaps found>
+- Drift: <drifted docs re-verified against current source BEFORE refreshing freshness (zero blind sha bumps)>
+- Map: <machine-readable map regenerated, all links resolve, enforcement re-proven>
+- What's NOT proven: <known stale/uncovered areas left, with reason>
+```

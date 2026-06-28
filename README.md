@@ -8,6 +8,12 @@ adversarially, research decisions instead of winging them.
 Works with **any coding agent** (Claude Code, Cursor, Codex, Copilot, …) and any model.
 Distilled from real, shipped work — not aspirational.
 
+**The throughline: agents that leave proof.** Coding agents are too good at saying *"done."*
+Every skill here ends in a [**receipt**](RECEIPTS.md) you can audit — claim, real basis, what
+ran, result, artifact, and what's *not* proven. Typed per skill (a decision cites sources; a
+capability asserts a metric), never a hollow `N/A` template — and [enforced by the validator](scripts/validate.mjs),
+so a skill can't ship without one.
+
 ## Install
 
 ### Shell one-liner (portable — fish / zsh / bash all fine)

@@ -35,3 +35,15 @@ gets you most of the way for free, and a parity check tells you exactly how far.
 ## Done when
 The code mirrors the reference with cited `file:line`, a parity result (number or behavioral
 assertion) is recorded, and any divergence is documented.
+
+## Receipt
+
+Prove you mirrored, didn't guess (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: <feature> built by mirroring a proven reference, not from first principles
+- Reference: <repo@sha you cloned and actually read>
+- Citations: <file:line cites in your code mapping each piece to the reference>
+- Parity: <max|Δ| < tol per stage, or the behavioral-contract match>
+- What's NOT proven: <documented intentional divergences / paths not parity-checked>
+```

@@ -62,3 +62,17 @@ The depth **matches the stakes**. A quick fork has a cited recommendation. A **d
 **primary sources (incl. papers where they exist) + the canonical references named to mirror + a
 cited rubric + a critical alignment audit** — plus a specific recommendation with "your call" vs
 "default taken" split out. **If you did one search for a deep question, you are not done.**
+
+## Receipt
+
+A decision receipt cites and recommends — it has *no* "command ran" or "artifact"; forcing those
+would be the fake-green this kit forbids (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: <the decision, made — not a survey of options>
+- Question: <the real fork + the depth it demanded (quick fork / deep)>
+- Sources: <primary sources cited — papers (authors/venue/year), standards — as links>
+- Recommendation: <the one call + reasoning; "your call" vs "default I'll take" split>
+- References to mirror: <the canonical impls to build to> · Rubric: <measurable criteria, if deep>
+- What's NOT proven: <stats you couldn't trace to a primary source / open assumptions to re-check>
+```

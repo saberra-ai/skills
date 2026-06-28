@@ -40,3 +40,17 @@ fixed inputs)**.
 The capability has a real-dependency test with an objective metric + artifact, the runner
 reports it green and would fail it on a silent skip, and the matrix states the grade — or an
 honest gap with the reason.
+
+## Receipt
+
+Leave this so the capability is *proven*, not asserted (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Capability: <what now works>
+- Claim: the capability works on a real input with its real dependency
+- Real input: <committed fixed input> + <the real dependency that ran, not a stub>
+- Metric: <the objective assertion that held — threshold / ordering / contains>
+- Artifact: <path to the inspectable output — image / text / vector / report>
+- What ran: <the verification runner command>
+- What's NOT proven: <honest gap — what was skipped or faked, and why>
+```

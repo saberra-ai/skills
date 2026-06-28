@@ -110,3 +110,16 @@ gate-green, integrated without a force-push.
   authors the spine from source, generates the map, wires enforcement, integrates — pausing at ⛔.
 - **Then maintain.** This builds the substrate; schedule [`maintain-knowledge-base`](../maintain-knowledge-base/SKILL.md)
   to keep it true as the code moves.
+
+## Receipt
+
+Prove the KB exists and is enforceable, not aspirational (see [RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: a navigable, enforceable knowledge base now exists where there was none
+- Format: <frontmatter + index + machine-readable map chosen>
+- Spine: <high-traffic docs authored FROM source, cited, freshness-stamped>
+- Coverage: <the coverage contract defined — what must be documented>
+- Validator: <checks wired into the gate/CI (or an honest MVP --check runner)>
+- What's NOT proven: <areas left uncovered / enforcement you couldn't wire yet>
+```

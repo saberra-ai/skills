@@ -87,3 +87,17 @@ then verify the seam, not just the parts.
 Built from a cited reference, verified by a runner that can't be fooled, hardened with repro'd
 fixes (or a documented honest gap), and integrated without a force-push — gate green at every
 phase, and the checklist above is fully ticked.
+
+## Receipt
+
+The composite — each phase's station leaves its own receipt; this rolls them up (see
+[RECEIPTS.md](../../../RECEIPTS.md)):
+
+```
+Claim: <feature> shipped — works on a real input and won't silently break
+- Built: <cited reference repo:file · parity Δ/contract>            (mirror-reference)
+- Verified: <metric asserted by a runner that fails on silent skip · artifact>   (or ⬜ gap)
+- Hardened: <audited N · fixed M w/ regression · cleared K>          (or ⬜ n/a — low-risk surface)
+- Integrated: <gate green on the branch · rebased, not force-pushed>
+- What's NOT proven: <honest ⬜ gaps carried from any phase>
+```

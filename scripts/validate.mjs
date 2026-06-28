@@ -32,6 +32,24 @@ const DESC_MIN = 40; // a one-liner with what+when is always longer than this
 const FIRST_PERSON = [/^\s*i\s/i, /\bi can help\b/i, /\byou can use this\b/i];
 const TRIGGER_CUE = /\b(use (when|whenever|for|after|instead|to)|when you|dispatch|reach for)\b/i;
 
+// Receipt standard (see RECEIPTS.md). Every skill must end in a `## Receipt` block: a typed,
+// copy-pasteable proof template. Fields are typed PER SKILL — a *decision* receipt has no
+// "command run"; a *capability* receipt does — so enforcement is a per-skill required-label
+// registry, never one flat template stamped on everyone (that would reintroduce the fake-green
+// "N/A" fields this standard exists to kill). Two invariants hold for ALL skills: a fenced
+// template, and an explicit honest-gap line (honest ⬜ over fake green is the kit's whole thesis).
+const RECEIPT_GAP_RE = /not proven|known gap|honest gap|not verified|unproven|⬜/i;
+const RECEIPT_FIELDS = {
+  'verify-capability':       ['Claim', 'Real input', 'Metric', 'Artifact'],
+  'mirror-reference':        ['Claim', 'Reference', 'Citations', 'Parity'],
+  'adversarial-harden':      ['Claim', 'Surface', 'Audited', 'Regression'],
+  'research-decision':       ['Claim', 'Question', 'Sources', 'Recommendation'],
+  'ship-feature':            ['Claim', 'Built', 'Verified', 'Hardened', 'Integrated'],
+  'maintain-skills':         ['Claim', 'Version', 'Migrations', 'Re-verify'],
+  'build-knowledge-base':    ['Claim', 'Format', 'Spine', 'Coverage', 'Validator'],
+  'maintain-knowledge-base': ['Claim', 'Audited', 'Drift', 'Map'],
+};
+
 // ---- tiny helpers ----------------------------------------------------------
 function walk(dir, pred, out = []) {
   if (!existsSync(dir)) return out;
@@ -95,6 +113,45 @@ function checkSkill(file) {
   }
   if (!fm.body.trim()) errors.push('empty body (no skill content)');
   return grade(file, 'skill', errors, warnings, { name, descLen: description?.length ?? 0 });
+}
+
+// Slice the `## Receipt` section: from its heading to the next `## ` (or EOF). Scoping matters —
+// a field label that appears in prose elsewhere, or inside another section's example, must NOT
+// satisfy the check. Returns null if there's no Receipt heading at all.
+function receiptSection(text) {
+  const m = text.match(/^##\s+Receipt\b.*$/m);
+  if (!m) return null;
+  const rest = text.slice(m.index + m[0].length);
+  const next = rest.search(/^##\s/m);
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+// Enforce the receipt standard on one skill. Universal: a `## Receipt` section, a fenced template,
+// and an honest-gap line. Per-skill: the typed fields its class owes (RECEIPT_FIELDS). A skill with
+// no registered field-spec still gets the universal checks (and a warning), so a *new* skill can't
+// silently ship a receipt-less or gap-less block.
+function checkReceipt(file, name) {
+  const errors = [], warnings = [];
+  const section = receiptSection(readFileSync(file, 'utf8'));
+  if (section === null) {
+    errors.push('no `## Receipt` block — every skill must end in a typed proof receipt (see RECEIPTS.md)');
+    return grade(file, 'receipt', errors, warnings, { name });
+  }
+  // The template IS the receipt — concatenate every fenced block's *inner* content. Fields and the
+  // honest-gap line must live INSIDE the fence, not in the surrounding prose: a label mentioned in
+  // an intro sentence ("this records the Claim, Sources and Recommendation") is not a real field,
+  // and accepting it would reopen the fake-green hole the standard closes. (Hardened: was section-
+  // wide; a prose-only field used to pass.) An unterminated fence yields no match → fails closed.
+  const fence = [...section.matchAll(/```[^\n]*\n([\s\S]*?)```/g)].map(m => m[1]).join('\n');
+  if (!fence.trim()) errors.push('Receipt has no fenced template (must be copy-pasteable)');
+  if (!RECEIPT_GAP_RE.test(fence)) errors.push('Receipt template has no honest-gap line ("What\'s NOT proven" / "Known gap") — the non-negotiable field');
+  const required = RECEIPT_FIELDS[name];
+  if (!required) { warnings.push(`no receipt field-spec registered for "${name}" — only universal checks ran`); return grade(file, 'receipt', errors, warnings, { name }); }
+  for (const label of required) {
+    const re = new RegExp(`\\b${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (!re.test(fence)) errors.push(`Receipt missing required field for ${name}: "${label}"`);
+  }
+  return grade(file, 'receipt', errors, warnings, { name });
 }
 
 function checkAgent(file) {
@@ -291,6 +348,7 @@ function run() {
   if (agentFiles.length === 0) hardFails.push('SILENT-SKIP GUARD: discovered 0 agents under agents/');
 
   const skills = skillFiles.map(checkSkill);
+  const receipts = skillFiles.map((f, i) => checkReceipt(f, skills[i].name));
   const agents = agentFiles.map(checkAgent);
   const skillNames = new Set(skills.map(s => s.name).filter(Boolean));
   const agentNames = new Set(agents.map(a => a.name).filter(Boolean));
@@ -328,12 +386,12 @@ function run() {
   }
   slugCheck.installSlug = installSlug; slugCheck.originSlug = slug;
 
-  const results = [...skills, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, manifestCheck, ...(installerCheck ? [installerCheck] : []), ...links, slugCheck];
+  const results = [...skills, ...receipts, ...agents, ...workflows, ...frontDoors, ...lifecycle, ...migrations, manifestCheck, ...(installerCheck ? [installerCheck] : []), ...links, slugCheck];
   const errored = results.filter(r => !r.ok);
   const warned = results.filter(r => r.warnings?.length);
   const report = {
     schema: 'agent-skills/v1',
-    counts: { skills: skills.length, agents: agents.length, workflows: workflows.length, frontDoors: frontDoors.length, migrations: migrations.length, version: lifecycle[0]?.version ?? null, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
+    counts: { skills: skills.length, receipts: receipts.filter(r => r.ok).length, agents: agents.length, workflows: workflows.length, frontDoors: frontDoors.length, migrations: migrations.length, version: lifecycle[0]?.version ?? null, mdFiles: mdFiles.length, errors: errored.length, warnings: warned.reduce((n, r) => n + r.warnings.length, 0) },
     hardFails,
     results,
   };
@@ -365,6 +423,24 @@ function selfTest() {
   const fdCases = [
     ['fd-just-steps', '---\nname: x\ndescription: Use when shipping. a workflow.\n---\n# X\n1. do a\n2. do b\n', f => f.errors.some(e => /kickoff|gates|phases/.test(e))],
   ];
+  // Receipt teeth: a skill with no `## Receipt`, one whose receipt omits the honest-gap line, and
+  // one missing a class-required field must all be rejected. The honest-gap case is the key one —
+  // it's the fake-green guard the whole standard exists for. checkReceipt takes the name explicitly.
+  const FENCE = '```';
+  const rcCases = [
+    ['rc-missing', 'verify-capability', '# X\nbody, no receipt section at all\n',
+      f => f.errors.some(e => /no `## Receipt` block/.test(e))],
+    ['rc-no-gap', 'verify-capability', `## Receipt\n${FENCE}\n- Claim: x\n- Real input: y\n- Metric: z\n- Artifact: a\n${FENCE}\n`,
+      f => f.errors.some(e => /honest-gap/.test(e))],
+    ['rc-missing-field', 'verify-capability', `## Receipt\n${FENCE}\n- Claim: x\n- Real input: y\n- Metric: z\n- Not proven: w\n${FENCE}\n`,
+      f => f.errors.some(e => /missing required field.*Artifact/.test(e))],
+    ['rc-no-fence', 'verify-capability', '## Receipt\n- Claim: x\n- Real input: y\n- Metric: z\n- Artifact: a\n- Not proven: w\n',
+      f => f.errors.some(e => /no fenced template/.test(e))],
+    // Hardening regression: "Artifact" appears only in the intro PROSE, not the fenced template —
+    // must still be rejected (a label name-dropped in a sentence is not a real receipt field).
+    ['rc-prose-field', 'verify-capability', `## Receipt\nThis records the Claim, Real input, Metric and Artifact.\n${FENCE}\n- Claim: x\n- Real input: y\n- Metric: z\n- Not proven: w\n${FENCE}\n`,
+      f => f.errors.some(e => /missing required field.*Artifact/.test(e))],
+  ];
 
   const tmp = mkdtempSync(join(tmpdir(), 'skills-selftest-'));
   let pass = 0;
@@ -390,6 +466,13 @@ function selfTest() {
     const fp = join(tmp, `${label}.md`);
     writeFileSync(fp, content);
     const graded = checkFrontDoor(fp);
+    if (assert(graded)) pass++;
+    else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
+  }
+  for (const [label, name, content, assert] of rcCases) {
+    const fp = join(tmp, `${label}.md`);
+    writeFileSync(fp, content);
+    const graded = checkReceipt(fp, name);
     if (assert(graded)) pass++;
     else failures.push(`${label}: expected rejection but got errors=[${graded.errors.join('; ')}]`);
   }
@@ -428,7 +511,7 @@ function selfTest() {
     if (graded.errors.some(e => /manifest missing skill/.test(e))) pass++;
     else failures.push(`manifest-missing: expected a missing-skill error, got [${graded.errors.join('; ')}]`);
   }
-  const total = cases.length + wfCases.length + fdCases.length + semverCases.length + mgCases.length + 2;
+  const total = cases.length + wfCases.length + fdCases.length + rcCases.length + semverCases.length + mgCases.length + 2;
   rmSync(tmp, { recursive: true, force: true });
   return { total, pass, failures };
 }
@@ -448,7 +531,7 @@ const { report, errored, hardFails } = run();
 if (args.includes('--json')) console.log(JSON.stringify(report, null, 2));
 
 const c = report.counts;
-console.log(`\nskills repo verification — v${c.version} · ${c.skills} skills, ${c.agents} agents, ${c.workflows} workflows, ${c.frontDoors} front-doors, ${c.migrations} migrations, ${c.mdFiles} md files`);
+console.log(`\nskills repo verification — v${c.version} · ${c.skills} skills (${c.receipts} with valid receipts), ${c.agents} agents, ${c.workflows} workflows, ${c.frontDoors} front-doors, ${c.migrations} migrations, ${c.mdFiles} md files`);
 console.log(`  install slug: ${report.results.find(r => r.kind === 'install-slug')?.installSlug ?? '—'} (origin: ${report.results.find(r => r.kind === 'install-slug')?.originSlug ?? '—'})`);
 for (const r of report.results) {
   for (const e of r.errors) console.log(`  ✗ ${r.file} [${r.kind}] ${e}`);
