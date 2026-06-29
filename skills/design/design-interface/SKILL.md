@@ -1,6 +1,6 @@
 ---
 name: design-interface
-description: Build a web interface at near-native quality — mirror a canonical reference (shadcn/Radix/Refactoring UI), commit to an explicit token system, animate with interruptible springs, and hit measurable bars (INP ≤200ms, contrast ≥4.5:1, axe clean) before calling it done. Use when building a new screen, page, or component and you want it to feel like a native app, not a generic AI-generated page.
+description: Build a web interface at near-native quality — mirror a canonical reference (shadcn/Radix/Refactoring UI), commit to an explicit token system, animate with interruptible springs, stay responsive (reflow to 320px, fluid type), and hit measurable bars (INP ≤200ms, contrast ≥4.5:1, axe clean) before calling it done. Use when building a new screen, page, or component and you want it to feel like a native app across phone/tablet/desktop, not a generic AI-generated page.
 ---
 
 # Design a Near-Native Interface
@@ -37,6 +37,14 @@ median, and don't ship web-jank.
      bare `:focus`), `@media (prefers-reduced-motion: reduce)`, `overscroll-behavior`. Optional
      shared-element [View Transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API)
      (progressive-enhance — cross-document is Chromium-only).
+   - **Adapt to the device** (native apps reshape per screen — a web app must too): mobile-first;
+     fluid type/space with [`clamp()`](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp) (max a
+     relative unit **≥2× the min** so 200% zoom still works); component-level
+     [`@container`](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
+     queries over viewport-only media queries; [`dvh`/`svh`](https://web.dev/blog/viewport-units) not
+     `100vh` (mobile browser chrome obscures `100vh`); `env(safe-area-inset-*)` + `viewport-fit=cover`
+     for notches/home-indicator; never lock orientation. It must **reflow to 320px CSS width with no
+     two-dimensional scrolling** ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
 5. **Critique against the generic, then measure** (▶ [`verify-capability`](../../engineering/verify-capability/SKILL.md)).
    Reject any part that matches the default you'd produce for *any* similar prompt. Then assert the
    measurable bars below and capture a **screenshot artifact** — metrics pass on ugly; a human glance catches it.
@@ -52,6 +60,9 @@ median, and don't ship web-jank.
 | Target size | ≥24×24px | [WCAG 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) |
 | a11y violations | `axe` `== []` | [axe-core](https://github.com/dequelabs/axe-core) |
 | Scale discipline | type/space values ∈ the defined scale | [Refactoring UI](https://refactoringui.com/) |
+| **Reflow** | usable at **320px** width, no 2-D scroll | [WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html) |
+| **Resize text** | to **200%**, no clipping (`clamp()` max ≥2× min) | [WCAG 1.4.4](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html) |
+| **Orientation** | not locked unless essential | [WCAG 1.3.4](https://www.w3.org/WAI/WCAG22/Understanding/orientation.html) |
 
 **Judgment layer (artifact + your eye, no threshold):** hierarchy, restraint ("spend boldness in
 one place"), whether motion *feels* right, distinctiveness vs the AI median.
@@ -62,6 +73,8 @@ one place"), whether motion *feels* right, distinctiveness vs the AI median.
   headings; centered hero + identical 3-col card grid; default unmodified shadcn; cards-inside-cards.
 - Linear/`ease` motion; animating `width`/`top`/`margin`; scattered animation everywhere; 300ms tap
   delay; focus ring on mouse click; ignoring `prefers-reduced-motion`.
+- `100vh` on mobile (use `dvh`); `vw`-locked font-size (breaks 200% zoom); viewport-only breakpoints
+  where a `@container` query belongs; fixed-width layout that 2-D-scrolls at 320px; locking orientation.
 - Hand-rolling a Dialog/Popover/Tabs instead of mirroring Radix (re-inventing solved a11y).
 
 ## Done when
@@ -78,7 +91,7 @@ Prove it's near-native, not just "looks fine" (see [RECEIPTS.md](../../../RECEIP
 Claim: <screen/component> built to near-native quality from a cited reference, not the AI median
 - Reference: <what you mirrored — shadcn@sha / Radix / Refactoring UI rules / motion>
 - Tokens: <the explicit system — named hex (dominant+accent), display font, type+space scale>
-- Checks: <measured bars — INP <Xms · LCP <Xs · CLS <X · contrast ≥4.5:1 · axe==[] · motion=spring>
-- Artifact: <path to screenshot (+ Lighthouse/CWV report)>
+- Checks: <measured bars — INP <Xms · LCP <Xs · CLS <X · contrast ≥4.5:1 · axe==[] · motion=spring · reflow@320px no h-scroll · text@200%>
+- Artifact: <path to screenshots at phone/tablet/desktop widths (+ Lighthouse/CWV report)>
 - What's NOT proven: <the "feels native" verdict (needs your eye) · View Transitions cross-doc = Chromium-only>
 ```

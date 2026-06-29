@@ -3,6 +3,22 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.8.1] — 2026-06-28
+
+### Changed
+- **`design-interface` + `design-review`** — added **responsiveness** as a first-class dimension
+  (it was thin: the skills covered touch ergonomics + motion but under-weighted adaptive layout — a
+  silent gap for a "near-native" claim, since mobile adaptation is half of native feel). Folded in,
+  verified against primary sources: mobile-first, fluid type via [`clamp()`](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp)
+  (max ≥2× min so 200% zoom survives), [`@container`](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
+  queries, [`dvh`/`svh`](https://web.dev/blog/viewport-units) not `100vh`, `env(safe-area-inset-*)` for
+  notches, and three measurable bars now in the rubric — **reflow at 320px / no 2-D scroll**
+  ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)), **resize text 200%**
+  ([1.4.4](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html)), **no orientation lock**
+  ([1.3.4](https://www.w3.org/WAI/WCAG22/Understanding/orientation.html)). `design-review` now runs its
+  pass at ≥3 viewport widths + both orientations with a screenshot per breakpoint. Caught by dogfooding
+  question right after the v0.8.0 ship.
+
 ## [0.8.0] — 2026-06-28
 
 ### Added
