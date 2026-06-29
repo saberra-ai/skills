@@ -48,6 +48,8 @@ const RECEIPT_FIELDS = {
   'maintain-skills':         ['Claim', 'Version', 'Migrations', 'Re-verify'],
   'build-knowledge-base':    ['Claim', 'Format', 'Spine', 'Coverage', 'Validator'],
   'maintain-knowledge-base': ['Claim', 'Audited', 'Drift', 'Map'],
+  'design-interface':        ['Claim', 'Reference', 'Tokens', 'Checks', 'Artifact'],
+  'design-review':           ['Claim', 'Surface', 'Audited', 'Fixed', 'Artifact'],
 };
 
 // ---- tiny helpers ----------------------------------------------------------

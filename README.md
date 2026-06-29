@@ -101,6 +101,8 @@ re-verifies). **Check what's loaded:** ask your agent *"which skills do you have
 | **decisions/research-decision** | Resolve an unsure product/eng call: web-search the best practice, cite it, **recommend** (not survey). |
 | **orchestration/ship-feature** | The **front-door workflow** — kick off one feature and it drives build → verify → harden as gated phases that hand off to the skills above. Runnable two ways: drive the phases manually in any harness, or run [`workflows/ship-feature.mjs`](workflows/ship-feature.mjs) as a one-command [dynamic workflow](https://code.claude.com/docs/en/workflows) in Claude Code. |
 | **orchestration/maintain-skills** | The **maintenance front-door** — keep an *installed* copy current the safe way: detect → update (backup + restore-on-failure) → run idempotent [migrations](migrations/) → **re-verify with the validator** → report what changed. Never auto-commits. Runnable manually or via [`workflows/maintain.mjs`](workflows/maintain.mjs). |
+| **design/design-interface** | Build a web interface at **near-native** quality — mirror a canonical reference ([registry](references.md): shadcn/Radix/Refactoring UI/motion), commit to an explicit token system (anti-slop), interruptible spring motion, and hit measurable bars (INP ≤200ms, contrast ≥4.5:1, axe clean). |
+| **design/design-review** | Audit an *existing* web UI for near-native quality — mechanical pass (axe, Core Web Vitals, motion/focus lints, AI-slop greps) → judgment pass (hierarchy, restraint, feel) → rank → fix forward with before/after proof. |
 
 ### Subagents (`agents/`)
 

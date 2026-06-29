@@ -3,6 +3,31 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.8.0] — 2026-06-28
+
+### Added
+- **`design/design-interface`** — build a web interface at **near-native** quality. Grounds the
+  *look* in a canonical reference (shadcn/Radix/Refactoring UI) + an explicit token system (the
+  anti-AI-slop move), and the *feel* in measurable bars: INP ≤200ms / LCP ≤2.5s / CLS ≤0.1
+  ([Core Web Vitals](https://web.dev/articles/vitals)), contrast ≥4.5:1 ([WCAG 2.2](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)),
+  `axe` clean, interruptible spring motion on composited properties ([Emil Kowalski](https://emilkowal.ski/ui/great-animations)),
+  with a screenshot artifact. Receipt: Claim · Reference · Tokens · Checks · Artifact.
+- **`design/design-review`** — audit an *existing* web UI: a mechanical pass (axe, Core Web Vitals,
+  motion/focus lints, AI-slop greps) then a judgment pass (hierarchy, restraint, feel), ranked by
+  severity and fixed forward with before/after proof. The diagnose-and-repair bookend to
+  design-interface (separate skill — its proof differs: diagnosed defects + measured delta, not a
+  from-scratch token system). Receipt: Claim · Surface · Audited · Fixed · Artifact.
+- **`references.md`** — a seed reference registry (`subsystem → reference`, code vs judgment) that
+  `mirror-reference` expects but the kit lacked; both design skills mirror from it.
+- Validator now registers typed receipt field-specs for both design skills, so they're enforced
+  (not merely warned) like every other skill.
+
+### Decision
+- New skills derived via a deep `research-decision` pass (primary sources: NN/g, WCAG 2.2, web.dev
+  Core Web Vitals, Refactoring UI, Anthropic frontend-design, motion/Radix/shadcn). The split into
+  two skills mirrors the kit's own build-vs-review separation (`mirror-reference` vs
+  `adversarial-harden`) — proof differs in kind, so the receipts do too.
+
 ## [0.7.0] — 2026-06-28
 
 ### Added
