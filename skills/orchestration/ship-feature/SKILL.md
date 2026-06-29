@@ -25,7 +25,14 @@ subagent for a parallel track).
   best" / quality / novel / safety** call demands the **deep bar**: primary sources (papers, not
   just blogs) + the canonical references named to mirror + a **cited rubric** — *not one search*.
   Under-researching a high-stakes question is the same failure as not researching it.
-- **Gate:** outcome + success-metric named; open forks resolved or explicitly deferred; and any
+- **Can you verify it *here*?** Name what Phase 2 will need — the build surface that must compile,
+  a display / toolchain / credential / running service the captest depends on — and confirm it
+  *before* building, not after. A feature you can't close out in this environment isn't framed:
+  either get the environment (fetch the resource, install the tool, copy the fixture) or scope to
+  the hermetic slice you *can* verify here + an explicit ⛔ for the rest. Don't discover the wall
+  mid-build, and don't declare ⛔ on a wall you haven't actually hit (try the unblock first).
+- **Gate:** outcome + success-metric named; open forks resolved or explicitly deferred; the
+  verification environment confirmed (or the unverifiable part scoped to an explicit ⛔); and any
   research done hit the depth its stakes demanded (deep → primary sources + references + rubric,
   per `research-decision`'s Done-when). A deep question answered with one search ⛔ does not pass.
 
@@ -34,7 +41,10 @@ subagent for a parallel track).
   actual code**, build to it **citing `file:line`** in your code.
 - Parity-check: numeric `max|Δ| < tol` for ported math, observable-contract match for UX.
 - **Gate:** builds, cited to a real reference, parity number recorded. A citation without a
-  parity check is a guess wearing a citation — don't pass this gate on one.
+  parity check is a guess wearing a citation — and so is a citation from memory or from a prior
+  research doc. Phase 0 *naming* the reference is not Phase 1: open the actual file and cite the
+  line you read. (Real bite: the `reference-builder` has caught a `file:line` that named the right
+  repo but a sentence that **does not exist in the source** — only opening the file surfaces that.)
 
 ## Phase 2 — Verify  ▶ `verify-capability`  (subagent: `capability-verifier`)
 - Land a test that drives the **real dependency on a committed fixed input**, asserts the
@@ -42,8 +52,16 @@ subagent for a parallel track).
   **fails loud on a silent skip**. Green ≠ verified.
 - Can't verify without faking (live account/remote/infra)? Leave an **explicit gap with the
   reason** — never weaken a test to make it green.
-- **Gate:** the success-metric is asserted by a runner that would fail on a silent skip — or an
-  honest ⬜ gap is recorded with why.
+- **Verified ≠ wired.** A captest that stands up its own harness proves the capability *works* —
+  not that the *product* invokes it. Check the real call path actually reaches it: drive the
+  capability through the production seam, or at least assert the prod code constructs/calls it on a
+  user path. A capability that's green in a captest but fed `None` / never-invoked in production is
+  **inert** — record that as an explicit ⬜ "*built, not yet wired in production*"; do **not** bank
+  it as shipped. (This was the single most common rot in practice: typed-but-`None`-advertised
+  data, captest-only stores/handshakes with no production instantiation, crypto with no transport.)
+- **Gate:** the success-metric is asserted by a runner that would fail on a silent skip, **and**
+  either the production call path is shown to reach the capability or a "built-but-inert" ⬜ is
+  recorded — or an honest ⬜ verification gap is recorded with why.
 
 ## Phase 3 — Harden  ▶ `adversarial-harden`  (subagent: `hardener`)
 - Only on risky surfaces (untrusted-input decoders, concurrency, shell-outs, parsers of
@@ -58,7 +76,13 @@ subagent for a parallel track).
 - Branch/worktree; **rebase onto upstream, never force-push**; **run the gate before every
   push**; reconcile parallel work by cherry-pick + resolve, not clobber. Targeted `git add`,
   not `-A`.
-- **Gate:** gate green on the integration branch; nothing else's work clobbered.
+- **Run the docs/freshness gate too, not just code.** Code you shipped is the *source* a KB doc
+  tracks — a slice that skips the doc gate silently re-stales the docs, and across many slices the
+  drift compounds invisibly. If a freshness/coverage gate exists, run it each push; reach for the
+  `maintain-knowledge-base` bookend when it goes red (re-verify the doc against source, never
+  blind-bump a sha).
+- **Gate:** code gate **and** docs/freshness gate green on the integration branch; nothing else's
+  work clobbered.
 
 ## Two ways to run it
 - **Any harness — drive it manually.** Follow the phases above; the agent invokes each station
@@ -76,11 +100,11 @@ then verify the seam, not just the parts.
 
 ## Progress checklist (the agent keeps this visible)
 ```
-[ ] 0 Framed      — outcome + success-metric named, forks resolved
-[ ] 1 Built       — cited reference <repo:file>, parity <Δ/contract>
-[ ] 2 Verified    — metric asserted + artifact, runner can't be fooled   (or ⬜ gap: …)
+[ ] 0 Framed      — outcome + metric named, forks resolved, verifiable-here confirmed
+[ ] 1 Built       — cited reference <repo:file> (file opened, not recalled), parity <Δ/contract>
+[ ] 2 Verified    — metric asserted + artifact, runner can't be fooled, reachable on the prod path   (or ⬜ gap / ⬜ built-but-inert: …)
 [ ] 3 Hardened    — audited N, fixed M, cleared K, invariants pinned
-[ ] 4 Integrated  — gate green, rebased not force-pushed
+[ ] 4 Integrated  — code + docs gate green, rebased not force-pushed
 ```
 
 ## Done when
@@ -94,10 +118,10 @@ The composite — each phase's station leaves its own receipt; this rolls them u
 [RECEIPTS.md](../../../RECEIPTS.md)):
 
 ```
-Claim: <feature> shipped — works on a real input and won't silently break
-- Built: <cited reference repo:file · parity Δ/contract>            (mirror-reference)
-- Verified: <metric asserted by a runner that fails on silent skip · artifact>   (or ⬜ gap)
+Claim: <feature> shipped — works on a real input, is reachable in the product, won't silently break
+- Built: <cited reference repo:file (opened) · parity Δ/contract>    (mirror-reference)
+- Verified: <metric asserted by a runner that fails on silent skip · artifact · reached on the prod call path>   (or ⬜ gap / ⬜ built-but-inert)
 - Hardened: <audited N · fixed M w/ regression · cleared K>          (or ⬜ n/a — low-risk surface)
-- Integrated: <gate green on the branch · rebased, not force-pushed>
-- What's NOT proven: <honest ⬜ gaps carried from any phase>
+- Integrated: <code + docs gate green on the branch · rebased, not force-pushed>
+- What's NOT proven: <honest ⬜ gaps carried from any phase — incl. anything built but not yet wired in production>
 ```
