@@ -31,6 +31,10 @@ subagent for a parallel track).
   either get the environment (fetch the resource, install the tool, copy the fixture) or scope to
   the hermetic slice you *can* verify here + an explicit ⛔ for the rest. Don't discover the wall
   mid-build, and don't declare ⛔ on a wall you haven't actually hit (try the unblock first).
+- **Probe the gate, don't just inventory it.** Run the actual command Phase 2/4 will run — a
+  `<test> --no-run`, the lint, a build of the crate you'll touch — *now*, on the current tree. A
+  disk / credential / config-drift wall that aborts the build is far cheaper to hit on an empty
+  tree than five times mid-Phase 2. Listing the dependencies is not the same as compiling them.
 - **Gate:** outcome + success-metric named; open forks resolved or explicitly deferred; the
   verification environment confirmed (or the unverifiable part scoped to an explicit ⛔); and any
   research done hit the depth its stakes demanded (deep → primary sources + references + rubric,
@@ -59,6 +63,11 @@ subagent for a parallel track).
   **inert** — record that as an explicit ⬜ "*built, not yet wired in production*"; do **not** bank
   it as shipped. (This was the single most common rot in practice: typed-but-`None`-advertised
   data, captest-only stores/handshakes with no production instantiation, crypto with no transport.)
+- **Does a *user* actually reach it?** The sibling failure, one level up: a whole **surface** the
+  user never gets to — a component nothing mounts, a route nothing links to, a command never
+  registered. "Does prod code call the capability?" is necessary but not sufficient; also ask
+  "would a user actually arrive here?" A dead-code panel passes every test it has and ships
+  nothing. Trace it from the entry point (the mount, the menu, the route), not just the call site.
 - **Gate:** the success-metric is asserted by a runner that would fail on a silent skip, **and**
   either the production call path is shown to reach the capability or a "built-but-inert" ⬜ is
   recorded — or an honest ⬜ verification gap is recorded with why.
@@ -76,6 +85,11 @@ subagent for a parallel track).
 - Branch/worktree; **rebase onto upstream, never force-push**; **run the gate before every
   push**; reconcile parallel work by cherry-pick + resolve, not clobber. Targeted `git add`,
   not `-A`.
+- **A gate you always bypass has stopped gating.** Bypassing once (`--no-verify` on a hook blocked
+  by *unrelated* drift, say) is fine and the doctrine allows it. Doing it twice for the **same**
+  reason is its own finding: fix the root cause — pin the toolchain, repair the hook — instead of
+  normalizing the bypass. Track which checks you've skipped and why; a silently-disabled gate is
+  the integration-phase version of fake green.
 - **Run the docs/freshness gate too, not just code.** Code you shipped is the *source* a KB doc
   tracks — a slice that skips the doc gate silently re-stales the docs, and across many slices the
   drift compounds invisibly. If a freshness/coverage gate exists, run it each push; reach for the
@@ -96,15 +110,18 @@ subagent for a parallel track).
 Disjoint slices → parallel subagent tracks (`reference-builder` / `capability-verifier` /
 `hardener`), integrated **one at a time** through Phase 4's gate. When tracks are coupled,
 **define a shared contract up front** (an interface/hook shape) so they build to the same thing —
-then verify the seam, not just the parts.
+then verify the seam, not just the parts. **Seam-check before banking a slice:** ask *what does
+the next slice assume this one delivered?* A latent gap — an inert dependency, an unmounted
+surface, a contract honoured in shape but not behaviour — hides *between* two "complete" slices
+and only surfaces when the next one builds on it. Catch it at the seam, not three slices later.
 
 ## Progress checklist (the agent keeps this visible)
 ```
-[ ] 0 Framed      — outcome + metric named, forks resolved, verifiable-here confirmed
+[ ] 0 Framed      — outcome + metric named, forks resolved, gate dry-run probed (not just inventoried)
 [ ] 1 Built       — cited reference <repo:file> (file opened, not recalled), parity <Δ/contract>
-[ ] 2 Verified    — metric asserted + artifact, runner can't be fooled, reachable on the prod path   (or ⬜ gap / ⬜ built-but-inert: …)
+[ ] 2 Verified    — metric asserted + artifact, runner can't be fooled, prod path + a user reaches it   (or ⬜ gap / ⬜ built-but-inert: …)
 [ ] 3 Hardened    — audited N, fixed M, cleared K, invariants pinned
-[ ] 4 Integrated  — code + docs gate green, rebased not force-pushed
+[ ] 4 Integrated  — code + docs gate green, no normalized gate-bypass, rebased not force-pushed
 ```
 
 ## Done when

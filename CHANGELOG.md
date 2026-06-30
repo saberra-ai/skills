@@ -3,6 +3,31 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.8.2] — 2026-06-30
+
+### Changed
+- **`ship-feature` + `RECEIPTS.md`** — folded in five process gaps surfaced by **dogfooding the
+  flow end-to-end** (the Pio self-improving-skill-loop ship, across three slices). All inline, no
+  new skill: `ship-feature` stays 144 lines, well under the ~300-line split threshold per
+  [Anthropic skill-authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices)
+  (split to reference files only when a SKILL.md is unwieldy; fold otherwise).
+  - **Phase 0 — probe the gate, don't just inventory it.** Run the actual command Phase 2/4 will
+    run (`<test> --no-run`, the lint, a build of the crate you'll touch) on the current tree
+    *before* writing code. A disk / credential / config-drift wall is far cheaper to hit on an
+    empty tree than five times mid-Phase 2 (the exact failure mode dogfooding hit).
+  - **Phase 2 — "does a *user* actually reach it?"** The sibling of *verified ≠ wired*, one level
+    up: a whole **surface** nothing mounts (a dead-code component / unlinked route / unregistered
+    command) passes every test it has and ships nothing. Trace from the entry point, not just the
+    call site.
+  - **Phase 4 — a gate you always bypass has stopped gating.** Repeated `--no-verify` for the
+    *same* reason is its own finding — fix the root cause (pin the toolchain, repair the hook)
+    instead of normalizing the bypass.
+  - **Fanning out — seam-check before banking a slice.** Ask *what does the next slice assume this
+    one delivered?* — latent gaps (an inert dependency, an unmounted surface) hide *between* two
+    "complete" slices and surface only when the next one builds on them.
+  - **`RECEIPTS.md` — triage non-obvious gaps inline** (*verifiable here? · cost · blocks-what*) so
+    a ⬜ is actionable, not merely honest. Validator green; no new required receipt field.
+
 ## [0.8.1] — 2026-06-28
 
 ### Changed

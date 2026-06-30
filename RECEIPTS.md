@@ -48,7 +48,10 @@ No matter the skill:
 
 1. **A fenced, copy-pasteable template** — so the next agent fills it in, doesn't reinvent it.
 2. **An explicit honest-gap line** (`What's NOT proven` / `Known gap` / `⬜`). A receipt with no
-   gap is lying by omission — there is always something not proven.
+   gap is lying by omission — there is always something not proven. When a gap is non-obvious,
+   **triage it inline** — *verifiable here? · cost to close · what it blocks* — so the reader (or
+   the next slice) can act on it instead of re-deriving it. A gap that's cheap and verifiable-here
+   is a to-do, not a deferral; say which.
 
 ## Enforced, not suggested
 
