@@ -3,6 +3,59 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.9.0] — 2026-06-30
+
+### Changed
+- **`adversarial-harden` + `hardener`** — made materially **more adversarial**. The skill was
+  purely *example-based* (hand-feed malformed/oversized inputs) — it found only the bugs a human
+  thought to enumerate. Added a tiered **A0–A6 ladder** so hardening escalates past hand-fed inputs
+  to the techniques that find what humans *don't* enumerate, each rung gated to the surface that
+  owes it (A1+A4 CI-cheap and broad; A2/A5 heavier, surface-gated; A6 design-time). Folded inline
+  (skill 50 → 82 lines, under the ~300-line split threshold per
+  [Anthropic skill-authoring best practices](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices));
+  no new required receipt field (added an optional `Methods:` line). MINOR — substantive new
+  capability, not a fix. Researched first (`research-decision`); every rung verified against a
+  primary source:
+  - **A0 Taxonomy** — a *named* input-class checklist (boundary · encoding/**overlong-UTF-8** ·
+    resource-exhaustion · injection · time/TOCTOU · ordering), each mapped to a
+    [CWE](https://cwe.mitre.org/): boundary→[ISTQB BVA](https://istqb-glossary.page/boundary-value-analysis/)/CWE-193;
+    [overlong-UTF-8 traversal](https://www.unicode.org/reports/tr36/tr36-15.html) (UTR #36 §3.1) +
+    [confusables](https://www.unicode.org/reports/tr39/) (UTS #39); billion-laughs
+    [CWE-776](https://cwe.mitre.org/data/definitions/776.html) / ReDoS
+    [CWE-1333](https://cwe.mitre.org/data/definitions/1333.html) +
+    [Crosby & Wallach, *Algorithmic Complexity Attacks*, USENIX Sec 2003](https://www.usenix.org/legacy/events/sec03/tech/full_papers/crosby/crosby_html/index.html);
+    TOCTOU [CWE-367](https://cwe.mitre.org/data/definitions/367.html) +
+    [Cloudflare leap-second panic](https://blog.cloudflare.com/how-and-why-the-leap-second-affected-cloudflare-dns/);
+    race [CWE-362](https://cwe.mitre.org/data/definitions/362.html). (Correction caught in research:
+    path-traversal is OWASP **A01**, not A03.)
+  - **A1 Property** — generate + assert an invariant + integrated **shrinking**:
+    [Claessen & Hughes, QuickCheck, ICFP 2000](https://dl.acm.org/doi/10.1145/351240.351266);
+    [MacIver / Hypothesis integrated shrinking](https://hypothesis.works/articles/integrated-shrinking/) (proptest).
+  - **A2 Fuzz** — coverage-guided fuzzing + sanitizer: [AFL++](https://aflplus.plus/),
+    [cargo-fuzz](https://rust-fuzz.github.io/book/);
+    [AddressSanitizer, Serebryany et al., USENIX ATC 2012](https://research.google/pubs/pub37752/) +
+    [UBSan](https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html).
+  - **A3 Oracle** — [differential, McKeeman, DTJ 1998](https://dblp.org/rec/journals/dtj/McKeeman98.html)
+    ([Csmith, PLDI 2011](https://dl.acm.org/doi/10.1145/1993498.1993532): 325+ compiler bugs);
+    [metamorphic, Chen et al. 1998](https://arxiv.org/abs/2002.12543) +
+    [Segura survey, IEEE TSE 2016](https://personales.us.es/sergiosegura/files/papers/segura16-tse.pdf).
+  - **A4 Mutation** — a surviving mutant = a missing assertion (the rigorous form of *green ≠
+    verified*): [DeMillo/Lipton/Sayward 1978](https://www.researchgate.net/publication/2957629);
+    mutation score predicts real-fault detection where coverage does not —
+    [Just et al., FSE 2014](https://dl.acm.org/doi/10.1145/2635868.2635929);
+    [cargo-mutants](https://mutants.rs/) / [PIT](https://pitest.org/).
+  - **A5 Interleave** — [loom](https://github.com/tokio-rs/loom) (models C11 weak memory; basis
+    [CDSChecker, Norris & Demsky, OOPSLA 2013](https://dl.acm.org/doi/10.1145/2509136.2509514)) +
+    [TSan](https://clang.llvm.org/docs/ThreadSanitizer.html); stateful PBT
+    ([Hughes, *Testing the Hard Stuff*, 2016](https://link.springer.com/chapter/10.1007/978-3-319-30936-1_9) —
+    the Erlang `dets` open→write→close→reopen corruption).
+  - **A6 Threats** — enumerate per trust boundary to find *missing controls* (absent audit-log =
+    Repudiation; authZ on the wrong side = Elevation): STRIDE
+    ([Kohnfelder & Garg, 1999](https://medium.com/@lorenkohnfelder/threat-modeling-retrospective-72910908533c);
+    [Microsoft Learn](https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats)) +
+    [attack trees, Schneier, Dr. Dobb's 1999](https://www.schneier.com/academic/archives/1999/12/attack_trees.html),
+    via [STRIDE→CAPEC→CWE](https://capec.mitre.org/).
+
 ## [0.8.2] — 2026-06-30
 
 ### Changed

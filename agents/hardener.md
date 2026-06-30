@@ -20,5 +20,15 @@ oversized, traversal), concurrency (races, double-writers, wrong-target cancels)
 (argument injection — leading-dash, unsanitized), parsers of model/remote output (panics on
 malformed), and the verification harness itself (can any test false-pass?).
 
+Don't stop at the inputs you thought of — escalate past hand-fed cases on the surfaces that owe
+it (the SKILL.md ladder A0–A6): a **named input-class checklist** (boundary · encoding/overlong-
+UTF-8 · resource-exhaustion/ReDoS · injection · time/TOCTOU · ordering), **property-based +
+fuzzing** to generate beyond imagination (proptest / cargo-fuzz + ASan), **differential or
+metamorphic** testing when there's no known-correct answer, **mutation testing** to prove the
+regression actually has teeth (a surviving mutant = a missing assertion — the rigorous form of
+green ≠ verified), **loom / race detectors** for shared-state concurrency, and **STRIDE / attack-
+tree enumeration** per trust boundary to catch *missing controls* (an absent audit-log, an authZ
+check on the wrong side) that no input fuzzer reaches. A1+A4 are cheap; gate A2/A5 to their surfaces.
+
 Honor the repo gate; work in a branch/worktree; do NOT push. Report per finding: REAL (with
 repro/path) or CLEARED (why); for fixes, what + the regression test. Don't manufacture findings.
