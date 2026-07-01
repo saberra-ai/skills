@@ -22,17 +22,18 @@ stop at the inputs *you* thought of. The bugs that survive review are the ones n
 ## The ladder — escalate past hand-fed inputs
 
 Hand-picked inputs only cover what you imagined. Each rung answers a question the others can't;
-reach for the ones your surface owes (right column) — don't run all six on everything.
+reach for the ones your surface owes (right column) — don't run all of them on everything.
 
 | Rung | Technique — the question it answers | Owe it when… |
 |---|---|---|
 | **A0 Taxonomy** | Hand-feed a *named* class list, not ad hoc (checklist below) | always — the systematic manual floor |
 | **A1 Property** | Generate inputs + assert an **invariant**, auto-**shrink** to a minimal case (proptest / Hypothesis) | any pure fn / parser / round-trip (`decode(encode x)==x`), algebraic law |
-| **A2 Fuzz** | **Coverage-guided fuzzing with a sanitizer on** — crashes/UB, no oracle (cargo-fuzz + ASan/UBSan) | untrusted-input decoders (image/audio/file/proto) |
+| **A2 Fuzz** | **Coverage-guided fuzzing with a sanitizer on** — crashes/UB, no oracle (cargo-fuzz + ASan/UBSan); go **structure-aware** (libprotobuf-mutator / `arbitrary`-derive, [rust-fuzz book](https://rust-fuzz.github.io/book/cargo-fuzz/structure-aware-fuzzing.html)) so inputs survive the parser's validity gate | untrusted-input decoders (image/audio/file/proto) |
 | **A3 Oracle** | **Differential** (two impls must agree) or **metamorphic** (a relation over related runs) | no known-correct answer — codecs, ranking, ML, numerics; or you mirrored a reference (old-vs-new) |
 | **A4 Mutation** | **Inject a fault; a surviving mutant is a missing assertion** (cargo-mutants / PIT / Stryker) | the rigorous form of *green ≠ verified* — run on any critical module |
-| **A5 Interleave** | **Exhaustive interleavings + race/UB detectors** (loom, TSan); stateful PBT for op *sequences* | shared-state concurrency; storage/pools (open→write→close→reopen, recycled-handle) |
+| **A5 Interleave** | **Exhaustive interleavings + race/UB detectors** (loom, TSan; [Shuttle](https://github.com/awslabs/shuttle) randomizes past loom's exhaustive limit for large state); stateful PBT for op *sequences* | shared-state concurrency; storage/pools (open→write→close→reopen, recycled-handle) |
 | **A6 Threats** | **Enumerate per trust boundary** (STRIDE / attack trees) — find *missing controls* | any auth / IPC / privilege boundary |
+| **A7 Model-adversarial** | **Attack the model surface itself** — prompt-injection / jailbreak / adversarial-prompt over the durable [OWASP LLM Top 10](https://genai.owasp.org/llm-top-10/); tools garak / PyRIT / promptfoo (provisional) | any parser/agent driven by model output — LLM tool-calls, RAG, model-as-judge |
 
 A1 + A4 are CI-cheap and broadly apply. A2/A5 are heavier — **gate them to their surfaces**. A6 is
 design-time (judgment, not compute): it *produces* the threats the other rungs then test — its
@@ -58,7 +59,7 @@ For every untrusted input, hand-feed each class — happy-path tests skip them a
 - **Shell-outs**: argument injection (leading-dash value parsed as a flag), unsanitized
   interpolation, `--` guards. → A0 / A6.
 - **Parsers of model/remote output**: panics on malformed/oversized; a grounding invariant a
-  crafted input breaks. → A1 / A2.
+  crafted input breaks; the model itself as adversary (prompt-injection / jailbreak). → A1 / A2 / A7.
 - **The verification harness itself**: can any test false-pass (metric on empty output, marker
   printed before the assertion)? → A4.
 

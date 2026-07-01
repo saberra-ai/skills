@@ -82,9 +82,16 @@ subagent for a parallel track).
   findings, no known REAL bug left unfixed.
 
 ## Phase 4 — Integrate
-- Branch/worktree; **rebase onto upstream, never force-push**; **run the gate before every
+- Branch/worktree; **rebase onto upstream, never force-push** — the one sanctioned exception is
+  [`--force-with-lease`](https://git-scm.com/docs/git-push#Documentation/git-push.txt---force-with-leaseltrefnamegt),
+  which refuses to clobber if upstream moved since you fetched; **run the gate before every
   push**; reconcile parallel work by cherry-pick + resolve, not clobber. Targeted `git add`,
   not `-A`.
+- **Reversibility before push.** A gate can output **Kill / Hold**, not only proceed
+  ([Cooper's stage-gate](https://www.stage-gate.com/)) — and the specific hold here is: ship is
+  not done until a **kill-switch, feature-flag, or rehearsed revert** exists, so a bad deploy is
+  recovered in minutes not hours. Fast, reliable rollback is the elite-team differentiator
+  ([DORA](https://dora.dev/)); a change you can't cleanly back out is not integrated.
 - **A gate you always bypass has stopped gating.** Bypassing once (`--no-verify` on a hook blocked
   by *unrelated* drift, say) is fine and the doctrine allows it. Doing it twice for the **same**
   reason is its own finding: fix the root cause — pin the toolchain, repair the hook — instead of
@@ -96,7 +103,16 @@ subagent for a parallel track).
   `maintain-knowledge-base` bookend when it goes red (re-verify the doc against source, never
   blind-bump a sha).
 - **Gate:** code gate **and** docs/freshness gate green on the integration branch; nothing else's
-  work clobbered.
+  work clobbered; a rehearsed rollback path (flag / kill-switch / revert) exists.
+
+## Phase 5 — Observe  (light — or fold into Phase 4's gate)
+- A release is deploy **+ evaluate-in-prod + roll back on regression**, not just merge
+  ([Google SRE, *Canarying Releases*](https://sre.google/workbook/canarying-releases/)). Before
+  push, name the **one prod signal** to watch (the Phase 0 metric's live proxy — error rate,
+  latency, the success counter) and the **rollback trigger** (the threshold that flips the
+  kill-switch from Phase 4).
+- **Gate:** the prod signal + its rollback trigger are named and the revert is one command away —
+  so a regression is caught and backed out, not discovered by a user.
 
 ## Two ways to run it
 - **Any harness — drive it manually.** Follow the phases above; the agent invokes each station
@@ -121,13 +137,15 @@ and only surfaces when the next one builds on it. Catch it at the seam, not thre
 [ ] 1 Built       — cited reference <repo:file> (file opened, not recalled), parity <Δ/contract>
 [ ] 2 Verified    — metric asserted + artifact, runner can't be fooled, prod path + a user reaches it   (or ⬜ gap / ⬜ built-but-inert: …)
 [ ] 3 Hardened    — audited N, fixed M, cleared K, invariants pinned
-[ ] 4 Integrated  — code + docs gate green, no normalized gate-bypass, rebased not force-pushed
+[ ] 4 Integrated  — code + docs gate green, no normalized gate-bypass, rebased not force-pushed, rollback path exists
+[ ] 5 Observed    — prod signal + rollback trigger named, revert one command away   (or folded into 4's gate)
 ```
 
 ## Done when
 Built from a cited reference, verified by a runner that can't be fooled, hardened with repro'd
-fixes (or a documented honest gap), and integrated without a force-push — gate green at every
-phase, and the checklist above is fully ticked.
+fixes (or a documented honest gap), and integrated without a force-push behind a rehearsed
+rollback path with a named prod signal to watch — gate green at every phase, and the checklist
+above is fully ticked.
 
 ## Receipt
 
@@ -139,6 +157,7 @@ Claim: <feature> shipped — works on a real input, is reachable in the product,
 - Built: <cited reference repo:file (opened) · parity Δ/contract>    (mirror-reference)
 - Verified: <metric asserted by a runner that fails on silent skip · artifact · reached on the prod call path>   (or ⬜ gap / ⬜ built-but-inert)
 - Hardened: <audited N · fixed M w/ regression · cleared K>          (or ⬜ n/a — low-risk surface)
-- Integrated: <code + docs gate green on the branch · rebased, not force-pushed>
+- Integrated: <code + docs gate green on the branch · rebased, not force-pushed · rollback path: flag/kill-switch/revert>
+- Observed: <prod signal watched · rollback trigger · revert one command away>   (or folded into Integrated's gate)
 - What's NOT proven: <honest ⬜ gaps carried from any phase — incl. anything built but not yet wired in production>
 ```

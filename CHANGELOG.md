@@ -3,6 +3,38 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [1.0.0] — 2026-07-01
+
+First stable release. A `research-decision` validation pass was run over **every skill** in the kit
+(one deep, cited evaluation each — verdicts + tweaks recorded in [`docs/DECISIONS.md`](docs/DECISIONS.md)).
+The pass found **no Reworks** — the kit's classical rigor and citations hold up — and one recurring
+gap: the **2026 agent-era + supply-chain + reversibility frontier**. Every surfaced tweak was applied
+(small, cited, additive — no skill rewritten); validator green (0 errors, all 13 skills/agents conform).
+
+### Added
+- **`docs/DECISIONS.md`** — per-skill decision-validation catalog (verdict · decisions validated ·
+  tweak landed · graded citations · cross-cutting finding · miss-risk).
+
+### Changed (research-validated edges closed)
+- **`adversarial-harden`** — new **A7 model-adversarial rung** (prompt-injection / jailbreak, OWASP
+  LLM Top 10; garak/PyRIT/promptfoo provisional); **structure-aware fuzzing** in A2; **Shuttle** in A5.
+- **`verify-capability`** — a **flake rung** (fail loud, never silent-retry into green), a **"verified
+  ≠ wired"** prod-call-path rung, and **mutation score** named as the metric green can't fake.
+- **`maintain-skills`** — update **provenance** (pin an immutable SHA / verify a signed tag — validator
+  still runs), a **diff-review-before-overwrite** gate, and a **same-named-foreign-skill collision** check.
+- **`mirror-reference`** — a **vet-the-reference** step (canonical *and* healthy; forks propagate
+  since-fixed bugs) + a **license/provenance gate** + a "no canonical reference exists" branch.
+- **`ship-feature`** — a **reversibility gate** (kill-switch / rehearsed revert; gates can Kill/Hold),
+  a light **Phase 5 — Observe** (prod signal + rollback trigger), and `--force-with-lease`.
+- **`maintain-knowledge-base`** — a **semantic drift check** (LCEF-filtered; complements, never
+  replaces re-verify), a **coverage regression ratchet**, and **ownership routing** (CODEOWNERS + two dates).
+- **`build-knowledge-base`** — an optional **code-symbol-map tier** (SCIP / tree-sitter/ctags) + a
+  self-contained-for-RAG clause.
+- **`design-interface`** — target size split into the **WCAG 24px floor vs the 44pt/48dp native
+  product bar** + a `<~300ms` motion ceiling.
+- **`research-decision`** (0.11.0) + **`design-review`** — reviewed, **kept clean** (already current:
+  the pipeline restructure; INP-not-FID / WCAG 2.2).
+
 ## [0.11.0] — 2026-07-01
 
 ### Changed

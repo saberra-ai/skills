@@ -15,7 +15,8 @@ A passing test suite does **not** mean a capability works. Capability tests are 
 S (compiles + units) → SS (runs with the **real dependency**, not a stub) → SSS (asserts an
 **objective metric**) → SSS+ (emits an **inspectable artifact**) → SSS++ (**parity** vs a
 reference where one exists) → **SSS+++ (a runner fails loud on silent skips, reproducible
-fixed inputs)**.
+fixed inputs)** → **SSS++++ (green is stable, not flaky — and the production call-path
+actually reaches the capability)**.
 
 ## Steps
 
@@ -23,7 +24,9 @@ fixed inputs)**.
    fixed input*, with the real dependency — not a mock. Gate it so the default fast suite
    skips it, but a verification runner can invoke it with the dependency present.
 2. **Assert an objective metric** (output contains expected content; a ranking/ordering holds;
-   a similarity/IoU/SNR/error threshold). Not "it ran".
+   a similarity/IoU/SNR/error threshold). Not "it ran". Where you can, prefer **mutation score**
+   — the one metric green can't fake, since it measures whether the tests actually catch injected
+   faults rather than merely execute the code (Just et al., FSE 2014).
 3. **Emit an inspectable artifact** (image/audio/text/vector) to a known dir — metrics pass on
    garbage; a human glance catches it.
 4. **Build the runner that can't be fooled.** A script that, per capability, checks the
@@ -33,7 +36,18 @@ fixed inputs)**.
    APIs): exercise the **real code path against a sandbox with zero real-world effect** (a
    loopback server, a stub connector, a tempdir, a fixed clock) — or a **recorded cassette**
    replayed through the real parser. State explicitly which layer is real vs recorded.
-6. **When it can't be verified without faking** (live account/remote/infra), leave an
+6. **Fail loud on flake — never silent-retry into green.** A capability test that only passes
+   after N reruns is **not verified**; flakes dominate large-scale CI (Google, "Taming
+   Google-Scale Continuous Testing", ICSE-SEIP 2017; Microsoft RootFinder found async-wait ~45%
+   of flaky roots). Quarantine an unstable test **explicitly with a deadline**, sibling to the
+   silent-skip rule — a re-run that flips red→green hides a real defect, so surface it, don't
+   retry past it.
+7. **Verified ≠ wired.** Proving the capability through its own test does not prove the
+   **production call-path reaches it** — a feature toggle, flag, or config can leave live code
+   dead (Fowler, "Feature Toggles"; reachability/dead-code, ICSE 2024). Confirm the wired prod
+   entrypoint actually hits the capability: a synthetic smoke / contract test / flag-health
+   check on the real path (as SRE canarying does before rollout).
+8. **When it can't be verified without faking** (live account/remote/infra), leave an
    **explicit gap with the reason**. Never weaken a test to make a run pass.
 
 ## Done when

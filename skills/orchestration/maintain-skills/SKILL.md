@@ -23,12 +23,29 @@ is reversible (backup → act → restore-on-failure).
   (`~/.…/skills/`) vs repo-local, and whether *both* exist (dual install). Read its `VERSION`.
 - Mirror: gstack detects `global-git / local-git / vendored / vendored-global` and the dir
   before any step (`gstack-upgrade/SKILL.md:86–112`).
-- **Gate:** install type + directory + current version known; or a clear "not installed" exit.
+- **Same-named-skill collision:** dual-install detection catches two copies of *this* kit, but not
+  a *foreign* kit shipping a skill of the same name. Before updating, check each installed skill
+  slug against the incoming set; if a same-named skill resolves to a **different source**, ⛔ stop
+  and ask — never clobber a differently-sourced skill of the same name.
+- **Gate:** install type + directory + current version known, no unresolved same-named-but-foreign
+  collision; or a clear "not installed" exit.
 
 ## Phase 1 — Update  (backup → act → restore on failure)
-- **Git install:** `git stash` (warn if it stashed local edits) → `fetch` → `reset --hard
-  origin/main`. **Vendored:** clone fresh to a temp dir, move the old copy to `.bak`, swap in
-  the new, and **restore the `.bak` if anything fails** (`gstack-upgrade/SKILL.md:124–147`).
+- **Provenance first — don't trust a moving `origin/main`.** Pin the update to an *immutable*
+  commit SHA recorded in the kit manifest (fetch, then `reset --hard <sha>`), and/or verify a
+  **signed** tag against a pre-trusted key — `git verify-tag <tag>` or `git merge/pull
+  --verify-signatures` ([git signature-verification docs](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work));
+  if the kit ships via npm, `npm audit signatures`
+  ([npm provenance](https://docs.npmjs.com/generating-provenance-statements)). Provenance proves
+  chain-of-custody, **not** benign code ([SLSA](https://slsa.dev)) — so Phase 3's validator still
+  runs regardless.
+- **Git install:** `git stash` (warn if it stashed local edits) → `fetch` → `reset --hard` to the
+  **pinned/verified SHA** (not a bare `origin/main`). **Vendored:** clone fresh to a temp dir, move
+  the old copy to `.bak`, swap in the new, and **restore the `.bak` if anything fails**
+  (`gstack-upgrade/SKILL.md:124–147`).
+- **Diff-review before the destructive swap:** surface the incoming changed paths (and the diff)
+  at a ⛔ **before** overwriting — not only in the Phase 4 after-the-fact report. `git diff
+  --stat <old>..<new>` (or over the staged temp clone) so the user approves *what* lands.
 - If there's a dual install, sync the second copy from the freshly-updated primary.
 - **Gate:** the working copy is at the new version, or fully rolled back to the old one — never
   a half-applied state.

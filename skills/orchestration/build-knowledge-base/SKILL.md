@@ -77,6 +77,17 @@ didn't read in the code** — every claim cites its source.
   `--check` (fail if stale / a link is missing / a doc is unlisted). Hand-writing the map is a
   Phase-1-only stopgap; a 4-doc KB grows. Keep the generator generic (no hardcoded section list)
   so it survives new sections.
+- **Optional: a code-symbol map, not just a doc index.** `llms.txt` maps *prose*; in 2026
+  "machine-readable for agents" also means a **code-symbol index** so the KB points agents at
+  go-to-def/find-refs over real structure. Add an optional tier — [SCIP](https://sourcegraph.com/blog/announcing-scip)
+  (the cross-language successor to LSIF) where a language indexer exists, or a
+  [tree-sitter](https://tree-sitter.github.io/tree-sitter/)/ctags symbol index (even a plain
+  `ctags -R` stub) when it doesn't. Link it from the index so agents can jump to definitions,
+  not just read pages.
+- **Keep each doc self-contained.** Agents retrieve *fragments* (RAG), not whole KBs, so each doc
+  should stand on its own and fit a context window — one concept, resolvable in isolation. This is
+  why [Diátaxis](https://diataxis.fr) separates doc *types*: a reference page shouldn't assume the
+  narrative of an explanation page.
 - **Gate:** the map regenerates deterministically, lists every doc, and every link resolves.
 
 ## Phase 4 — Coverage contract + enforce  ▶ `verify-capability`

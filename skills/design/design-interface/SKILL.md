@@ -30,7 +30,8 @@ median, and don't ship web-jank.
    - **Motion = interruptible springs**, not `ease`/linear; import `motion/react`
      ([Emil Kowalski](https://emilkowal.ski/ui/great-animations), [motion.dev](https://motion.dev/docs/spring)).
      Animate **`transform`/`opacity` only** (composited). Asymmetric timing — fast in (~0.1s), soft
-     out (~0.15s) ([Linear](https://performance.dev/how-is-linear-so-fast-a-technical-breakdown)).
+     out (~0.15s) ([Linear](https://performance.dev/how-is-linear-so-fast-a-technical-breakdown)); keep
+     UI transitions **<~300ms** ([Emil Kowalski](https://emilkowal.ski/ui/the-blur-up-technique), [animations.dev](https://animations.dev/)).
    - **Hide latency**: optimistic updates ([`useOptimistic`](https://react.dev/reference/react/useOptimistic)),
      prefetch on hover, skeleton (known layout) over spinner.
    - **Native details**: `touch-action: manipulation` (kill 300ms tap delay), `:focus-visible` (not
@@ -43,7 +44,10 @@ median, and don't ship web-jank.
      [`@container`](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_containment/Container_queries)
      queries over viewport-only media queries; [`dvh`/`svh`](https://web.dev/blog/viewport-units) not
      `100vh` (mobile browser chrome obscures `100vh`); `env(safe-area-inset-*)` + `viewport-fit=cover`
-     for notches/home-indicator; never lock orientation. It must **reflow to 320px CSS width with no
+     for notches/home-indicator; never lock orientation. Size primary touch targets to the platform
+     product bar — **44pt** ([Apple HIG](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls))
+     / **48dp** ([Material 3](https://m3.material.io/foundations/designing/structure#dab862b1-e042-4c40-b680-b484b9f077f6)),
+     not just the WCAG 24px floor. It must **reflow to 320px CSS width with no
      two-dimensional scrolling** ([WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html)).
 5. **Critique against the generic, then measure** (▶ [`verify-capability`](../../engineering/verify-capability/SKILL.md)).
    Reject any part that matches the default you'd produce for *any* similar prompt. Then assert the
@@ -57,7 +61,7 @@ median, and don't ship web-jank.
 | LCP / CLS | ≤2.5s / ≤0.1 | web.dev |
 | Frame budget | ≤16ms; no long task >50ms; `transform`/`opacity` only | [web.dev](https://web.dev/articles/rendering-performance) |
 | Text / UI contrast | **≥4.5:1** / ≥3:1 | [WCAG 1.4.3/1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) |
-| Target size | ≥24×24px | [WCAG 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) |
+| Target size | ≥24×24px (WCAG 2.5.8 floor) — prefer **44pt** ([Apple HIG](https://developer.apple.com/design/human-interface-guidelines/accessibility#Buttons-and-controls)) / **48dp** ([Material 3](https://m3.material.io/foundations/designing/structure#dab862b1-e042-4c40-b680-b484b9f077f6)) for primary touch targets | [WCAG 2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) |
 | a11y violations | `axe` `== []` | [axe-core](https://github.com/dequelabs/axe-core) |
 | Scale discipline | type/space values ∈ the defined scale | [Refactoring UI](https://refactoringui.com/) |
 | **Reflow** | usable at **320px** width, no 2-D scroll | [WCAG 1.4.10](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html) |

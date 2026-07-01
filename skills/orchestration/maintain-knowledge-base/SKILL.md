@@ -35,6 +35,16 @@ checks actually true.
 - Apply the content fixes. **Only then** refresh the freshness stamp (`source_sha`/`verified_at`
   or equivalent). **Never bump a sha to silence a staleness warning without re-verifying** — a
   blind bump is a lie that says "someone checked this" when no one did.
+- **Semantic drift** slips past a matching sha: keep the sha as the cheap trigger, but *complement*
+  it — never replace it — with a doc↔source **inconsistency check** (an LLM compares the prose to
+  the current source; cf. Panthaplackel et al., deep-JIT inconsistency detection, AAAI 2021,
+  [panthap2/deep-jit-inconsistency-detection](https://github.com/panthap2/deep-jit-inconsistency-detection)).
+  Any such flag is *advisory only*: it feeds the human/agent re-verify above, it does not bump on
+  its own — the anti-blind-bump core stands. **Control the false positives**: raw unfiltered LLM
+  detection flags ~98% of docs at only ~14% accuracy (useless noise); require an LCEF filter to
+  reach ~94% accuracy before a flag is actionable. For a doc claim that maps to executable
+  behavior, prefer a **doc-derived test** over the LLM flag — a green test is stronger evidence than
+  a prose match.
 - **Gate:** every drifted doc is either updated-and-refreshed (after real verification) or
   flagged with a specific reason it can't be — zero blind sha bumps.
 
@@ -44,7 +54,11 @@ checks actually true.
   reachable. Mirror an existing good doc's shape.
 - **Do not pad.** A concise-complete doc for a small unit is correct; length is not coverage.
   Adding words to clear a size heuristic is fake value — leave well-sized docs alone.
-- **Gate:** the coverage contract is satisfied by real, source-grounded docs — not stubs, not padding.
+- Make the coverage contract a **regression ratchet**, not a big-bang backfill: fail if
+  documented/total *drops* vs the base branch (like `--fail-under` pinned to the base ratio) — new
+  code must ship documented, but you don't block on legacy debt ("clean as you code").
+- **Gate:** the coverage contract is satisfied by real, source-grounded docs — not stubs, not
+  padding — and the documented/total ratio has not regressed below the base branch.
 
 ## Phase 3 — Machine-readable map  (for LLMs)
 - Maintain a generated entry map (e.g. an [`llms.txt`](https://llmstxt.org): H1 + summary +
@@ -59,6 +73,11 @@ checks actually true.
   verified". Cross-links: only add links whose **targets you existence-checked**.
 - During active development drift is a *treadmill*; enforcement is what makes new drift visible
   immediately instead of accumulating.
+- **Route by ownership**: put docs paths under `CODEOWNERS` so a doc change pulls its owner in as a
+  **required reviewer** — the human who can say the prose is *right*, not just changed. Track **two
+  dates**: git's last-modified (automatic) and a manually-set **last-reviewed** — because git can't
+  tell a typo fix from a vetted overhaul, so a recent commit is not evidence anyone re-verified
+  (cf. *Software Engineering at Google*, Ch. 10, Documentation).
 - **Gate:** a fresh drift/incompleteness fails the gate — proven by the check going red on a
   deliberate stale edit, then green once fixed.
 
