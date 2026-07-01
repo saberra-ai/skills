@@ -3,6 +3,24 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.11.0] — 2026-07-01
+
+### Changed
+- **`research-decision`** — restructured the whole skill into an explicit decision **pipeline**:
+  **FORK → LANES → FORAGE → GRADE → RUBRIC → PREMORTEM → RECEIPT**, with the core principle *never let
+  source quality become source monoculture* (the failure isn't shallow depth — it's missing lanes).
+  Builds on 0.10.0's coverage discipline by folding §2.5–§2.8 into named stages and adding: a **FORK**
+  frame (decision · options · stakes · constraints · success metric · blast radius · **expiration**)
+  before any search; a **FORAGE** step making search *hybrid* — broad + **snowballing** from seeds +
+  **adversarial** queries + **lateral reading**/click-restraint on unfamiliar sources, framed by
+  **information foraging** (leave a patch when it stops yielding); the omission audit reframed as a
+  Klein **premortem** (+ "wrong in 30 days?"); and a **re-check trigger** in the Receipt (fast-moving
+  decisions expire). Grounded in the methods it borrows — PRISMA 2020 / Cochrane / Kitchenham (rigor),
+  Wohlin (snowballing & hybrid search > database-only), Wineburg & McGrew (lateral reading), Pirolli &
+  Card (information foraging), GRADE (certainty of evidence ≠ strength of recommendation), Klein
+  (premortem). MINOR — a substantive restructure of an existing skill, no new required receipt field
+  (the Receipt gains a `Re-check trigger` line).
+
 ## [0.10.0] — 2026-07-01
 
 ### Changed
