@@ -3,6 +3,21 @@
 All notable changes to this kit are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · versioning: [SemVer](https://semver.org).
 
+## [0.10.0] — 2026-07-01
+
+### Changed
+- **`research-decision`** — added **coverage discipline** so a deep answer can't be "clean-lane
+  only." New enforced requirements: (§2.5) five research **lanes** — primary/official, practitioner
+  ecosystem, deployment reality, critical/failure evidence, user-context — each hit or explicitly
+  N/A'd; (§2.6) a **fast-moving-domain freshness sweep** (current-year + artifact hubs directly —
+  HF/GitHub/arXiv/registries, deployment terms like GGUF/MLX/Ollama/vLLM, provisional-flag unofficial
+  finds); (§2.7) a pre-final **omission audit** (what would an expert be annoyed I missed? practitioner
+  favorites without papers? strongest counterexample?); (§2.8) **evidence grading A–D** with claims
+  resting on A/B and C/D labeled as leads; and (§3) a **"miss-risk"** note in the final answer. Folded
+  into Done-when, Anti-patterns, and the Receipt (new Coverage line + miss-risk gap). Motivated by the
+  same failure mode as the deep-bar rewrite: "primary sources preferred" quietly becoming "community
+  evidence ignored," and generic research missing the user's real decision surface.
+
 ## [0.9.0] — 2026-06-30
 
 ### Changed
